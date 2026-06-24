@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Autotrim</title>
+<style>
+  :root{
+    --bg:#0e1726; --card:#16223a; --line:#26344f; --txt:#e6edf7; --sub:#90a0bd;
+    --accent:#2e9bff; --ok:#27c08a; --warn:#e8b13b; --bad:#e7553b; --pill:#1d2c47;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:12px;-webkit-tap-highlight-color:transparent}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:var(--sub);font-size:12px}
+  .bar{display:flex;gap:8px;align-items:center;margin:12px 0}
+  button{font-size:15px;font-weight:600;border:none;border-radius:10px;padding:12px 14px;background:var(--accent);color:#fff}
+  button.sec{background:var(--pill);color:var(--txt);border:1px solid var(--line)}
+  button:disabled{opacity:.4}
+  .status{font-size:13px;font-weight:600;padding:6px 10px;border-radius:20px;background:var(--pill);border:1px solid var(--line)}
+  .status.on{color:var(--ok)} .status.off{color:var(--bad)}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:10px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .card .lbl{color:var(--sub);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  .card .val{font-size:30px;font-weight:700;margin-top:2px}
+  .card .unit{font-size:14px;color:var(--sub);font-weight:500}
+  .full{grid-column:1/-1}
+  .state{font-size:22px;font-weight:700}
+  .state.BOOT_UP{color:var(--warn)} .state.STANDBY{color:var(--sub)} .state.ACTIVE{color:var(--ok)} .state.FAULT{color:var(--bad)}
+  .horizon{position:relative;height:54px;background:#0a1120;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+  .horizon .mid{position:absolute;left:50%;top:0;bottom:0;width:2px;background:#3a4a66}
+  .needle{position:absolute;top:6px;bottom:6px;width:4px;background:var(--accent);left:50%;transform-origin:center;border-radius:2px}
+  .relays{display:flex;gap:6px;flex-wrap:wrap}
+  .pill{font-size:12px;font-weight:700;padding:6px 8px;border-radius:8px;background:var(--pill);border:1px solid var(--line);color:var(--sub)}
+  .pill.on{background:var(--ok);color:#04231a;border-color:var(--ok)}
+  .pos{height:10px;background:#0a1120;border-radius:6px;overflow:hidden;border:1px solid var(--line);margin-top:6px}
+  .pos > div{height:100%;background:var(--accent);width:0%}
+  fieldset{border:1px solid var(--line);border-radius:12px;margin:10px 0;padding:10px 12px}
+  legend{color:var(--sub);font-size:12px;padding:0 6px;text-transform:uppercase;letter-spacing:.04em}
+  .row{display:flex;align-items:center;gap:10px;margin:8px 0}
+  .row label{flex:1;font-size:14px}
+  .row input[type=number]{width:88px;background:#0a1120;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px;font-size:15px;text-align:right}
+  .row input[type=range]{flex:1}
+  .toggle{display:flex;align-items:center;gap:10px}
+  .cmds{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .warnbar{background:#3a2410;border:1px solid var(--warn);color:#ffd98a;font-size:12px;border-radius:8px;padding:8px;margin:8px 0}
+  .muted{color:var(--sub);font-size:12px}
+  #toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#0a1120;border:1px solid var(--line);color:var(--txt);padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;z-index:99}
+  #toast.show{opacity:1}
+  #toast.ok{border-color:var(--ok)} #toast.err{border-color:var(--bad);color:#ffb3a3}
+</style>
+</head>
+<body>
+  <h1>Autotrim</h1>
+  <div class="sub">Web Bluetooth-styring · krever Chrome (Android/PC)</div>
+
+  <div class="bar">
+    <button id="btnConnect">Koble til</button>
+    <button id="btnDisconnect" class="sec" disabled>Koble fra</button>
+    <span id="status" class="status off">frakoblet</span>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="grid">
+    <div class="card full">
+      <div class="lbl">Roll <span id="rollSideTxt" class="unit"></span></div>
+      <div class="val"><span id="roll">–</span><span class="unit"> °</span></div>
+      <div class="horizon" style="margin-top:8px">
+        <div class="mid"></div>
+        <div class="needle" id="needle"></div>
+      </div>
+    </div>
+    <div class="card"><div class="lbl">Rollrate</div><div class="val"><span id="rate">–</span><span class="unit"> °/s</span></div></div>
+    <div class="card"><div class="lbl">Fart (SOG)</div><div class="val"><span id="sog">–</span><span class="unit"> kn</span></div></div>
+    <div class="card"><div class="lbl">Tilstand</div><div class="state" id="state">–</div></div>
+    <div class="card"><div class="lbl">GPS</div><div class="val" style="font-size:20px"><span id="fix">–</span> · <span id="sats">–</span><span class="unit"> sats</span></div></div>
+    <div class="card full">
+      <div class="lbl">Plan-posisjon (estimat)</div>
+      <div class="muted">Venstre <span id="posLtxt">0%</span></div>
+      <div class="pos"><div id="posL"></div></div>
+      <div class="muted" style="margin-top:6px">Høyre <span id="posRtxt">0%</span></div>
+      <div class="pos"><div id="posR"></div></div>
+    </div>
+    <div class="card full">
+      <div class="lbl">Reléer</div>
+      <div class="relays" style="margin-top:6px">
+        <span class="pill" id="rLU">LU</span><span class="pill" id="rLD">LD</span>
+        <span class="pill" id="rRU">RU</span><span class="pill" id="rRD">RD</span>
+        <span class="pill" id="fFlags" style="margin-left:auto">feil: –</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTO + KOMMANDOER -->
+  <fieldset>
+    <legend>Drift</legend>
+    <div class="toggle"><input type="checkbox" id="autoEnabled"><label for="autoEnabled">Autotrim på</label>
+      <button class="sec" id="btnApplyAuto" disabled>Bruk</button></div>
+    <div class="cmds" style="margin-top:10px">
+      <button class="sec" data-cmd="1" disabled>Begge opp</button>
+      <button class="sec" data-cmd="2" disabled>Re-kalibrer (opp +30%)</button>
+      <button class="sec" data-cmd="4" disabled>Nullstill roll (i ro)</button>
+      <button class="sec" data-cmd="3" disabled>Lagre parametere</button>
+    </div>
+  </fieldset>
+
+  <!-- PARAMETERE -->
+  <fieldset>
+    <legend>Parametere</legend>
+    <div class="warnbar">Endringer sendes når du trykker «Send». «Lagre parametere» (over) skriver dem varig til enheten.</div>
+    <div class="row"><label>Fart på (kn)</label><input type="number" id="speedOnKn" step="0.5"></div>
+    <div class="row"><label>Fart av (kn)</label><input type="number" id="speedOffKn" step="0.5"></div>
+    <div class="row"><label>Roll-settpunkt (°)</label><input type="number" id="rollSetpointDeg" step="0.1"></div>
+    <div class="row"><label>Dødbånd (°)</label><input type="number" id="rollDeadbandDeg" step="0.1"></div>
+    <div class="row"><label>kP</label><input type="number" id="kP" step="0.005"></div>
+    <div class="row"><label>kI</label><input type="number" id="kI" step="0.005"></div>
+    <div class="row"><label>Fusjon-alpha</label><input type="number" id="fusionAlpha" step="0.005"></div>
+    <div class="row"><label>Pådrag-tau (s)</label><input type="number" id="cmdTauSec" step="0.5"></div>
+    <div class="row"><label>Full slaglengde (ms)</label><input type="number" id="fullStrokeMs" step="100"></div>
+    <div class="row"><label>Maks deploy (0–1)</label><input type="number" id="maxDeployFrac" step="0.05"></div>
+    <div class="row"><label>Nøytral deploy (0–1)</label><input type="number" id="neutralFrac" step="0.05"></div>
+    <div class="row"><label>rollSign / gyroSign</label><span class="muted" id="signs">–</span></div>
+    <div class="bar"><button id="btnSendParams" disabled>Send parametere</button>
+      <button class="sec" id="btnReload" disabled>Les på nytt</button></div>
+  </fieldset>
+
+  <div class="muted">UUID-tjeneste 9a8b0001-… · structene tolkes little-endian etter README.</div>
+  <div id="toast"></div>
+
+<script>
+const SVC  = "9a8b0001-7b2c-4f3d-9e6a-2b1c3d4e5f60";
+const CH_PARAMS = "9a8b0002-7b2c-4f3d-9e6a-2b1c3d4e5f60";
+const CH_TELE   = "9a8b0003-7b2c-4f3d-9e6a-2b1c3d4e5f60";
+const CH_CMD    = "9a8b0004-7b2c-4f3d-9e6a-2b1c3d4e5f60";
+const STATES = ["BOOT_UP","STANDBY","ACTIVE","FAULT"];
+
+let device=null, chParams=null, chTele=null, chCmd=null;
+let params=null;  // siste leste params som ArrayBuffer
+
+const $ = id => document.getElementById(id);
+const PARAM_FIELDS = [
+  ["speedOnKn",4],["speedOffKn",8],["rollSetpointDeg",12],["rollDeadbandDeg",16],
+  ["kP",20],["kI",24],["fusionAlpha",28],["cmdTauSec",32],["fullStrokeMs",36],
+  ["maxDeployFrac",40],["neutralFrac",44]
+];
+
+function setConnected(on){
+  $("status").textContent = on ? "tilkoblet" : "frakoblet";
+  $("status").className = "status " + (on?"on":"off");
+  $("btnConnect").disabled = on;
+  $("btnDisconnect").disabled = !on;
+  $("btnApplyAuto").disabled = !on;
+  $("btnSendParams").disabled = !on;
+  $("btnReload").disabled = !on;
+  document.querySelectorAll("[data-cmd]").forEach(b=>b.disabled=!on);
+}
+
+async function connect(){
+  try{
+    device = await navigator.bluetooth.requestDevice({
+      filters:[{services:[SVC]},{namePrefix:"Autotrim"}],
+      optionalServices:[SVC]
+    });
+    device.addEventListener("gattserverdisconnected", onDisconnect);
+    const server = await device.gatt.connect();
+    const svc = await server.getPrimaryService(SVC);
+    chParams = await svc.getCharacteristic(CH_PARAMS);
+    chTele   = await svc.getCharacteristic(CH_TELE);
+    chCmd    = await svc.getCharacteristic(CH_CMD);
+    await chTele.startNotifications();
+    chTele.addEventListener("characteristicvaluechanged", e=>renderTele(e.target.value));
+    await loadParams();
+    setConnected(true);
+  }catch(err){ alert("Tilkobling feilet: "+err); }
+}
+
+function onDisconnect(){ setConnected(false); }
+
+async function disconnect(){
+  if(device && device.gatt.connected) device.gatt.disconnect();
+  setConnected(false);
+}
+
+function renderTele(dv){
+  // 39-byte struct, little-endian (se README / types.h)
+  const rollDeg     = dv.getFloat32(4,true);
+  const rollRate    = dv.getFloat32(8,true);
+  const sogKn       = dv.getFloat32(20,true);
+  const gpsFix      = dv.getUint8(24);
+  const sats        = dv.getUint8(25);
+  const state       = dv.getUint8(26);
+  const posL        = dv.getFloat32(28,true);
+  const posR        = dv.getFloat32(32,true);
+  const relayBits   = dv.getUint8(36);
+  const faults      = dv.getUint16(37,true);
+
+  $("roll").textContent = rollDeg.toFixed(1);
+  $("rate").textContent = rollRate.toFixed(1);
+  $("sog").textContent  = sogKn.toFixed(1);
+  $("fix").textContent  = gpsFix ? "FIX" : "ingen";
+  $("sats").textContent = sats;
+  $("rollSideTxt").textContent = Math.abs(rollDeg)<0.5 ? "" : (rollDeg>0 ? "styrbord lav" : "babord lav");
+
+  const st = STATES[state] || "?";
+  $("state").textContent = st; $("state").className = "state "+st;
+
+  const ang = Math.max(-45,Math.min(45,rollDeg));
+  $("needle").style.transform = `translateX(-50%) rotate(${ang}deg)`;
+
+  $("posL").style.width = (posL*100).toFixed(0)+"%"; $("posLtxt").textContent=(posL*100).toFixed(0)+"%";
+  $("posR").style.width = (posR*100).toFixed(0)+"%"; $("posRtxt").textContent=(posR*100).toFixed(0)+"%";
+
+  [["rLU",0],["rLD",1],["rRU",2],["rRD",3]].forEach(([id,bit])=>{
+    $(id).className = "pill" + ((relayBits>>bit & 1) ? " on" : "");
+  });
+  $("fFlags").textContent = "feil: " + (faults===0 ? "ingen" : faults.toString(2).padStart(3,"0"));
+}
+
+async function loadParams(){
+  const dv = await chParams.readValue();
+  params = dv.buffer.slice(0); // kopi
+  $("autoEnabled").checked = dv.getUint8(3)===1;
+  PARAM_FIELDS.forEach(([id,off])=> $(id).value = +dv.getFloat32(off,true).toFixed(4));
+  const rollSign = dv.getInt8(48), gyroSign = dv.getInt8(49);
+  $("signs").textContent = `rollSign ${rollSign>=0?'+':''}${rollSign} · gyroSign ${gyroSign>=0?'+':''}${gyroSign}`;
+}
+
+function buildParams(){
+  // start fra siste leste buffer (bevarer magic/version/sign/reserved)
+  const buf = params ? params.slice(0) : new ArrayBuffer(52);
+  const dv = new DataView(buf);
+  dv.setUint16(0,0xA770,true); dv.setUint8(2,1);
+  dv.setUint8(3, $("autoEnabled").checked ? 1:0);
+  PARAM_FIELDS.forEach(([id,off])=> dv.setFloat32(off, parseFloat($(id).value)||0, true));
+  return buf;
+}
+
+let toastTimer=null;
+function toast(msg, kind){
+  const t=$("toast"); t.textContent=msg; t.className="show"+(kind?(" "+kind):"");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.className="",1600);
+}
+
+async function sendParams(){
+  if(!chParams){ toast("Ikke tilkoblet","err"); return; }
+  try{
+    const buf = buildParams();
+    await chParams.writeValueWithResponse(buf);
+    params = buf;
+    toast("Parametere sendt ✓","ok");
+  }catch(err){ toast("Skriving feilet: "+err,"err"); }
+}
+
+const CMD_NAMES = {1:"Begge opp",2:"Re-kalibrer",3:"Lagre parametere",4:"Nullstill roll"};
+async function sendCmd(code){
+  if(!chCmd){ toast("Ikke tilkoblet","err"); return; }
+  try{
+    await chCmd.writeValueWithResponse(new Uint8Array([code]));
+    toast("Sendt: "+(CMD_NAMES[code]||code)+" ✓","ok");
+  }catch(err){ toast("Kommando feilet: "+err,"err"); }
+}
+
+$("btnConnect").onclick = connect;
+$("btnDisconnect").onclick = disconnect;
+$("btnReload").onclick = loadParams;
+$("btnSendParams").onclick = sendParams;
+$("btnApplyAuto").onclick = sendParams;   // toggla auto -> send hele params
+document.querySelectorAll("[data-cmd]").forEach(b=> b.onclick=()=>sendCmd(+b.dataset.cmd));
+
+if(!navigator.bluetooth){
+  document.body.insertAdjacentHTML("afterbegin",
+    "<div class='warnbar'>Nettleseren støtter ikke Web Bluetooth. Bruk Chrome på Android eller PC.</div>");
+}
+</script>
+</body>
+</html>
