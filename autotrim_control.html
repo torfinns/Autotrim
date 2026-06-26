@@ -28,8 +28,8 @@
   .state{font-size:22px;font-weight:700}
   .state.BOOT_UP{color:var(--warn)} .state.STANDBY{color:var(--sub)} .state.ACTIVE{color:var(--ok)} .state.FAULT{color:var(--bad)}
   .horizon{position:relative;height:54px;background:#0a1120;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
-  .horizon .mid{position:absolute;left:50%;top:0;bottom:0;width:2px;background:#3a4a66}
-  .needle{position:absolute;top:6px;bottom:6px;width:4px;background:var(--accent);left:50%;transform-origin:center;border-radius:2px}
+  .horizon .mid{position:absolute;left:0;right:0;top:50%;height:1px;transform:translateY(-50%);background:#3a4a66}
+  .needle{position:absolute;left:8%;right:8%;top:50%;height:4px;background:var(--accent);transform-origin:center;border-radius:2px;transition:transform .08s linear}
   .relays{display:flex;gap:6px;flex-wrap:wrap}
   .pill{font-size:12px;font-weight:700;padding:6px 8px;border-radius:8px;background:var(--pill);border:1px solid var(--line);color:var(--sub)}
   .pill.on{background:var(--ok);color:#04231a;border-color:var(--ok)}
@@ -205,7 +205,7 @@ function renderTele(dv){
   $("state").textContent = st; $("state").className = "state "+st;
 
   const ang = Math.max(-45,Math.min(45,rollDeg));
-  $("needle").style.transform = `translateX(-50%) rotate(${ang}deg)`;
+  $("needle").style.transform = `translateY(-50%) rotate(${ang}deg)`;
 
   $("posL").style.width = (posL*100).toFixed(0)+"%"; $("posLtxt").textContent=(posL*100).toFixed(0)+"%";
   $("posR").style.width = (posR*100).toFixed(0)+"%"; $("posRtxt").textContent=(posR*100).toFixed(0)+"%";
