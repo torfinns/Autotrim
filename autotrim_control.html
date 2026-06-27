@@ -34,8 +34,10 @@
   .relays{display:flex;gap:6px;flex-wrap:wrap}
   .pill{font-size:12px;font-weight:700;padding:6px 8px;border-radius:8px;background:var(--pill);border:1px solid var(--line);color:var(--sub)}
   .pill.on{background:var(--ok);color:#04231a;border-color:var(--ok)}
-  .pos{height:10px;background:#0a1120;border-radius:6px;overflow:hidden;border:1px solid var(--line);margin-top:6px}
-  .pos > div{height:100%;background:var(--accent);width:0%}
+  .pos-wrap{display:flex;gap:20px;margin-top:10px}
+  .pos-col{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .pos-v{width:36px;height:80px;background:#0a1120;border-radius:6px;overflow:hidden;border:1px solid var(--line);position:relative}
+  .pos-v > div{position:absolute;bottom:0;left:0;right:0;background:var(--accent);height:0%;transition:height .15s linear}
   fieldset{border:1px solid var(--line);border-radius:12px;margin:10px 0;padding:10px 12px}
   legend{color:var(--sub);font-size:12px;padding:0 6px;text-transform:uppercase;letter-spacing:.04em}
   .row{display:flex;align-items:center;gap:6px;margin:10px 0 2px}
@@ -79,10 +81,18 @@
     <div class="card"><div class="lbl">GPS</div><div class="val" style="font-size:20px"><span id="fix">–</span> · <span id="sats">–</span><span class="unit"> sats</span></div></div>
     <div class="card full">
       <div class="lbl">Plan-posisjon (estimat)</div>
-      <div class="muted">Venstre <span id="posLtxt">0%</span></div>
-      <div class="pos"><div id="posL"></div></div>
-      <div class="muted" style="margin-top:6px">Høyre <span id="posRtxt">0%</span></div>
-      <div class="pos"><div id="posR"></div></div>
+      <div class="pos-wrap">
+        <div class="pos-col">
+          <div class="muted" style="font-size:11px">Venstre</div>
+          <div class="pos-v"><div id="posL"></div></div>
+          <div class="muted" id="posLtxt" style="font-size:11px">0%</div>
+        </div>
+        <div class="pos-col">
+          <div class="muted" style="font-size:11px">Høyre</div>
+          <div class="pos-v"><div id="posR"></div></div>
+          <div class="muted" id="posRtxt" style="font-size:11px">0%</div>
+        </div>
+      </div>
     </div>
     <div class="card full">
       <div class="lbl">Reléer</div>
@@ -297,8 +307,8 @@ function renderTele(dv){
   $("state").textContent = st; $("state").className = "state "+st;
   const ang = Math.max(-45,Math.min(45,rollDeg));
   $("needle").style.transform = `translateY(-50%) rotate(${ang}deg)`;
-  $("posL").style.width = (posL*100).toFixed(0)+"%"; $("posLtxt").textContent=(posL*100).toFixed(0)+"%";
-  $("posR").style.width = (posR*100).toFixed(0)+"%"; $("posRtxt").textContent=(posR*100).toFixed(0)+"%";
+  $("posL").style.height = (posL*100).toFixed(0)+"%"; $("posLtxt").textContent=(posL*100).toFixed(0)+"%";
+  $("posR").style.height = (posR*100).toFixed(0)+"%"; $("posRtxt").textContent=(posR*100).toFixed(0)+"%";
   [["rLU",0],["rLD",1],["rRU",2],["rRD",3]].forEach(([id,bit])=>{
     $(id).className = "pill" + ((relayBits>>bit & 1) ? " on" : "");
   });
