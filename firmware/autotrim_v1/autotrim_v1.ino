@@ -401,27 +401,20 @@ public:
         if (!keep) { requestBothUp(); setState(State::STANDBY); break; }
 
         float e = rollDeg - p.rollSetpointDeg;   // e>0 => styrbord lav
-        Side desired = Side::NONE; float mag = 0;
-        if (e >  p.rollDeadbandDeg)      { desired = Side::RIGHT; mag = e - p.rollDeadbandDeg; }
-        else if (e < -p.rollDeadbandDeg) { desired = Side::LEFT;  mag = (-e) - p.rollDeadbandDeg; }
 
-        if (desired != _integSide) { _integ = 0; _integSide = desired; }
-        float targetFrac = 0;
-        if (desired != Side::NONE) {
-          _integ += mag * dt;
-          float iClampHi = (p.kI > 1e-6f) ? (p.maxDeployFrac / p.kI) : 0.0f;
-          _integ = constrain(_integ, 0.0f, iClampHi);
-          targetFrac = p.kP * mag + p.kI * _integ;
-          targetFrac = constrain(targetFrac, 0.0f, p.maxDeployFrac);
-        }
-        float tau = max(0.1f, p.cmdTauSec);
-        float a = dt / (tau + dt);
-        _filtTarget = _filtTarget + a * (targetFrac - _filtTarget);
-        _active = desired;
+        // Integreringsbasert kontroll: trimposisjonen akkumulerer feilen.
+        // Innenfor dødbånd: hold posisjon — IKKE trekk tilbake til nøytral.
+        // _trimFrac: positiv = babord (venstre) deployert, negativ = styrbord (høyre) deployert.
+        float eMag = 0;
+        if      (e >  p.rollDeadbandDeg) eMag = -(e - p.rollDeadbandDeg);  // styrbord lav → mer høyre
+        else if (e < -p.rollDeadbandDeg) eMag = -(e + p.rollDeadbandDeg);  // babord lav  → mer venstre
+        _trimFrac += p.kP * eMag * dt;
+        _trimFrac  = constrain(_trimFrac, -p.maxDeployFrac, p.maxDeployFrac);
 
-        float tgtLeftMs = 0, tgtRightMs = 0;
-        if (_active == Side::LEFT)  tgtLeftMs  = _filtTarget * p.fullStrokeMs;
-        if (_active == Side::RIGHT) tgtRightMs = _filtTarget * p.fullStrokeMs;
+        float tgtLeftMs  = max(0.0f,  _trimFrac) * p.fullStrokeMs;
+        float tgtRightMs = max(0.0f, -_trimFrac) * p.fullStrokeMs;
+        _active = (_trimFrac >  0.02f) ? Side::LEFT
+                : (_trimFrac < -0.02f) ? Side::RIGHT : Side::NONE;
 
         if (_posLeftMs  < tgtLeftMs  - POS_DEADBAND_MS) ld = true;
         else if (_posLeftMs  > tgtLeftMs  + POS_DEADBAND_MS) lu = true;
@@ -459,7 +452,7 @@ private:
   static float clampFrac(float f) { return f < 0 ? 0 : (f > 1 ? 1 : f); }
   void setState(State s) {
     _state = s; _stateTimeMs = 0;
-    if (s == State::ACTIVE) { _integ = 0; _integSide = Side::NONE; _filtTarget = 0; }
+    if (s == State::ACTIVE || s == State::STANDBY) { _trimFrac = 0; }
     _holdLUms = _holdLDms = _holdRUms = _holdRDms = 0;
   }
   void integratePosition(float dt, bool lu, bool ld, bool ru, bool rd, const AutotrimParams &p) {
@@ -474,7 +467,7 @@ private:
   State   _state = State::BOOT_UP;
   Side    _active = Side::NONE;
   float   _stateTimeMs = 0, _posLeftMs = 0, _posRightMs = 0;
-  float   _integ = 0; Side _integSide = Side::NONE; float _filtTarget = 0;
+  float   _trimFrac = 0;   // signert trimposisjon: + = babord deployert, - = styrbord deployert
   bool    _autoLatched = false; float _recalMs = 0;
   int     _testCh = -1; float _testMs = 0;
   float   _holdLUms = 0, _holdLDms = 0, _holdRUms = 0, _holdRDms = 0;
