@@ -37,6 +37,7 @@ DIY automatisk trimplan-styring for båt. En ESP32 retter opp sideveis slagside 
 - GPS: 38400 baud (ikke u-blox-default 115200)
 - IMU-fortegn: `rollSign = +1` (verifiser at styrbord lav → positiv roll på skjermen)
 - `gyroSign`-feltet ignoreres — `rollSign` brukes for begge akser
+- `PIN_BNO_RST = -1` — RST på BNO055 er ikke koblet til ESP32; -1 hopper over reset-sekvensen (BNO055 bruker intern POR)
 - BLE: NimBLE 2.5.0 (se merknad under)
 
 ## Bibliotek (Arduino IDE) for `autotrim_v1`
