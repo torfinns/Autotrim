@@ -34,10 +34,11 @@
   .relays{display:flex;gap:6px;flex-wrap:wrap}
   .pill{font-size:12px;font-weight:700;padding:6px 8px;border-radius:8px;background:var(--pill);border:1px solid var(--line);color:var(--sub)}
   .pill.on{background:var(--ok);color:#04231a;border-color:var(--ok)}
-  .pos-wrap{display:flex;gap:20px;margin-top:10px}
-  .pos-col{display:flex;flex-direction:column;align-items:center;gap:4px}
-  .pos-v{width:36px;height:80px;background:#0a1120;border-radius:6px;overflow:hidden;border:1px solid var(--line);position:relative}
-  .pos-v > div{position:absolute;bottom:0;left:0;right:0;background:var(--accent);height:0%;transition:height .15s linear}
+  .pos-wrap{display:flex;gap:16px;margin-top:10px;justify-content:center}
+  .pos-col{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;max-width:180px}
+  .pos-v{width:100%;height:100px;background:#0a1120;border-radius:6px;border:1px solid var(--line);position:relative;overflow:hidden}
+  .pos-v > div{position:absolute;top:0;left:4px;right:4px;height:4px;background:var(--ok);border-radius:2px;transition:top .12s linear}
+  .relaybtns button{font-size:16px;padding:16px 10px}
   fieldset{border:1px solid var(--line);border-radius:12px;margin:10px 0;padding:10px 12px}
   legend{color:var(--sub);font-size:12px;padding:0 6px;text-transform:uppercase;letter-spacing:.04em}
   .row{display:flex;align-items:center;gap:6px;margin:10px 0 2px}
@@ -104,28 +105,22 @@
     </div>
   </div>
 
-  <!-- DRIFT -->
+  <!-- DRIFT + TEST -->
   <fieldset>
     <legend>Drift</legend>
-    <button id="btnAuto" class="btn-toggle big" disabled>Autotrim: AV</button>
-    <p class="hint">Slår automatikken av/på. Aktiveres bare når fart > «Fart på» og GPS har fix (eller Debug er på).</p>
-    <button class="sec big" data-cmd="1" disabled>⬆ Begge plan opp (nøytral)</button>
-    <p class="hint">Kjører begge plan helt opp — bruk når du vil nullstille / sikre nøytral.</p>
-  </fieldset>
-
-  <!-- TEST -->
-  <fieldset>
-    <legend>Test</legend>
-    <button id="btnDebug" class="btn-toggle big" disabled>Debug: AV</button>
-    <p class="hint">Kobler ut farts- og GPS-krav så automatikken og reléene kan testes på benk. Slås alltid av ved omstart.</p>
-    <div class="relaybtns" style="margin-top:10px">
-      <button class="sec relay-btn" data-cmd="10" disabled>⬆ Venstre opp</button>
-      <button class="sec relay-btn" data-cmd="11" disabled>⬇ Venstre ned</button>
-      <button class="sec relay-btn" data-cmd="12" disabled>⬆ Høyre opp</button>
-      <button class="sec relay-btn" data-cmd="13" disabled>⬇ Høyre ned</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button id="btnAuto" class="btn-toggle big" disabled>Autotrim: AV</button>
+      <button id="btnDebug" class="btn-toggle big" disabled>Debug: AV</button>
     </div>
-    <button class="sec relay-btn" data-cmd="14" disabled style="width:100%;margin-top:8px">⏹ Stopp alle</button>
-    <p id="relayHint" class="hint" style="color:var(--sub);margin-top:6px">Aktiver Debug for å bruke relé-knappene.</p>
+    <p class="hint">Autotrim engasjerer ved fart > «Fart på» og GPS-fix. Debug kobler ut disse kravene for benk-test — slås alltid av ved omstart.</p>
+    <div class="relaybtns" style="margin-top:10px">
+      <button class="sec relay-btn" data-cmd="10" disabled>⬆ L UP</button>
+      <button class="sec relay-btn" data-cmd="12" disabled>⬆ R UP</button>
+      <button class="sec relay-btn" data-cmd="11" disabled>⬇ L DOWN</button>
+      <button class="sec relay-btn" data-cmd="13" disabled>⬇ R DOWN</button>
+    </div>
+    <p id="relayHint" class="hint" style="margin-top:6px">Relé-knappene aktiveres når Debug er på.</p>
+    <button class="sec big" data-cmd="1" disabled style="margin-top:8px">⬆ Begge plan opp (nøytral)</button>
   </fieldset>
 
   <!-- PARAMETERE -->
@@ -143,10 +138,10 @@
     <p class="hint">Kompenserer for skjev montering. Legg til målt feil: sensor viser −2° på vater → skriv +2.</p>
     <div class="row"><label>Dødbånd (°)</label><span class="dotfill"></span><input type="number" id="rollDeadbandDeg" step="0.1"></div>
     <p class="hint">Ingen korrigering så lenge rollen er innenfor ± dette rundt settpunktet. Hindrer jaging.</p>
-    <div class="row"><label>kP</label><span class="dotfill"></span><input type="number" id="kP" step="0.005"></div>
-    <p class="hint">Proporsjonalledd: hvor kraftig den svarer på avvik. Høyere = raskere, men kan overskyte.</p>
-    <div class="row"><label>kI</label><span class="dotfill"></span><input type="number" id="kI" step="0.005"></div>
-    <p class="hint">Integralledd: fjerner vedvarende slagside over tid. For høy → treg svingning.</p>
+    <div class="row"><label>kP (×100)</label><span class="dotfill"></span><input type="number" id="kP" step="0.5" min="0"></div>
+    <p class="hint">Proporsjonalledd: hvor kraftig den svarer på avvik. Typisk 3–15. Høyere = raskere, men kan overskyte.</p>
+    <div class="row"><label>kI (×100)</label><span class="dotfill"></span><input type="number" id="kI" step="0.1" min="0"></div>
+    <p class="hint">Integralledd: fjerner vedvarende slagside over tid. Typisk 0,2–2. For høy → treg svingning.</p>
     <div class="row"><label>Fusjon-alpha</label><span class="dotfill"></span><input type="number" id="fusionAlpha" step="0.005"></div>
     <p class="hint">Komplementærfilter (0,90–0,999): vekt på gyro vs. akselerometer.</p>
     <div class="row"><label>Pådrag-tau (s)</label><span class="dotfill"></span><input type="number" id="cmdTauSec" step="0.5"></div>
@@ -214,10 +209,11 @@ const CMD_NAMES = {1:"Begge opp",2:"Re-kalibrer",4:"Nullstill roll",
 let device=null, chParams=null, chTele=null, chCmd=null, params=null;
 let autoActive=false, debugActive=false, connected=false;
 const $ = id => document.getElementById(id);
+// [id, byteOffset, displayScale]  — displayScale: GUI = raw * scale; raw = GUI / scale
 const PARAM_FIELDS = [
-  ["speedOnKn",4],["speedOffKn",8],["rollSetpointDeg",12],["mountingOffsetDeg",52],
-  ["rollDeadbandDeg",16],["kP",20],["kI",24],["fusionAlpha",28],["cmdTauSec",32],
-  ["fullStrokeMs",36],["maxDeployFrac",40],["neutralFrac",44]
+  ["speedOnKn",4,1],["speedOffKn",8,1],["rollSetpointDeg",12,1],["mountingOffsetDeg",52,1],
+  ["rollDeadbandDeg",16,1],["kP",20,100],["kI",24,100],["fusionAlpha",28,1],["cmdTauSec",32,1],
+  ["fullStrokeMs",36,1],["maxDeployFrac",40,1],["neutralFrac",44,1]
 ];
 
 function updateRelayBtns(){
@@ -307,8 +303,9 @@ function renderTele(dv){
   $("state").textContent = st; $("state").className = "state "+st;
   const ang = Math.max(-45,Math.min(45,rollDeg));
   $("needle").style.transform = `translateY(-50%) rotate(${ang}deg)`;
-  $("posL").style.height = (posL*100).toFixed(0)+"%"; $("posLtxt").textContent=(posL*100).toFixed(0)+"%";
-  $("posR").style.height = (posR*100).toFixed(0)+"%"; $("posRtxt").textContent=(posR*100).toFixed(0)+"%";
+  const pL=(posL*94).toFixed(1), pR=(posR*94).toFixed(1);
+  $("posL").style.top=pL+"%"; $("posLtxt").textContent=(posL*100).toFixed(0)+"%";
+  $("posR").style.top=pR+"%"; $("posRtxt").textContent=(posR*100).toFixed(0)+"%";
   [["rLU",0],["rLD",1],["rRU",2],["rRD",3]].forEach(([id,bit])=>{
     $(id).className = "pill" + ((relayBits>>bit & 1) ? " on" : "");
   });
@@ -322,7 +319,7 @@ async function loadParams(){
   debugActive = dv.getUint8(50)===1;
   updateAutoBtn();
   updateDebugBtn();
-  PARAM_FIELDS.forEach(([id,off])=> $(id).value = +dv.getFloat32(off,true).toFixed(4));
+  PARAM_FIELDS.forEach(([id,off,sc])=> $(id).value = +(dv.getFloat32(off,true)*(sc||1)).toFixed(4));
   $("rollSign").value = dv.getInt8(48);
   $("gyroSign").value = dv.getInt8(49);
 }
@@ -333,7 +330,7 @@ function buildParams(){
   dv.setUint16(0,0xA770,true); dv.setUint8(2,2);
   dv.setUint8(3,  autoActive  ? 1:0);
   dv.setUint8(50, debugActive ? 1:0);
-  PARAM_FIELDS.forEach(([id,off])=> dv.setFloat32(off, parseFloat($(id).value)||0, true));
+  PARAM_FIELDS.forEach(([id,off,sc])=> dv.setFloat32(off, (parseFloat($(id).value)||0)/(sc||1), true));
   dv.setInt8(48, parseInt($("rollSign").value));
   dv.setInt8(49, parseInt($("gyroSign").value));
   return buf;
@@ -360,17 +357,17 @@ async function sendCmd(code){
 const PRESETS = {
   default: {
     speedOnKn:4.0, speedOffKn:3.0, rollSetpointDeg:0.0, mountingOffsetDeg:0.0,
-    rollDeadbandDeg:1.5, kP:0.05, kI:0.005, fusionAlpha:0.98,
+    rollDeadbandDeg:1.5, kP:5.0, kI:0.5, fusionAlpha:0.98,
     cmdTauSec:3.0, fullStrokeMs:6000, maxDeployFrac:0.8, neutralFrac:0.05
   },
   sporty: {
     speedOnKn:3.0, speedOffKn:2.5, rollSetpointDeg:0.0, mountingOffsetDeg:0.0,
-    rollDeadbandDeg:0.8, kP:0.10, kI:0.010, fusionAlpha:0.96,
+    rollDeadbandDeg:0.8, kP:10.0, kI:1.0, fusionAlpha:0.96,
     cmdTauSec:1.5, fullStrokeMs:6000, maxDeployFrac:0.9, neutralFrac:0.05
   },
   smooth: {
     speedOnKn:4.0, speedOffKn:3.0, rollSetpointDeg:0.0, mountingOffsetDeg:0.0,
-    rollDeadbandDeg:2.5, kP:0.03, kI:0.002, fusionAlpha:0.995,
+    rollDeadbandDeg:2.5, kP:3.0, kI:0.2, fusionAlpha:0.995,
     cmdTauSec:6.0, fullStrokeMs:6000, maxDeployFrac:0.7, neutralFrac:0.1
   }
 };

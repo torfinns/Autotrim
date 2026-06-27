@@ -431,6 +431,21 @@ public:
       }
     }
 
+    // Minimum pådragstid 500 ms — unngår korte jokke-pulser.
+    // Retningsskifte nullstiller motstående hold umiddelbart.
+    static const float MIN_RELAY_ON_MS = 500.0f;
+    const float hdt = dt * 1000.0f;
+    if (lu) _holdLDms = 0; if (ld) _holdLUms = 0;
+    if (ru) _holdRDms = 0; if (rd) _holdRUms = 0;
+    if (lu && _holdLUms <= 0) _holdLUms = MIN_RELAY_ON_MS;
+    if (ld && _holdLDms <= 0) _holdLDms = MIN_RELAY_ON_MS;
+    if (ru && _holdRUms <= 0) _holdRUms = MIN_RELAY_ON_MS;
+    if (rd && _holdRDms <= 0) _holdRDms = MIN_RELAY_ON_MS;
+    if (_holdLUms > 0) { lu = true; _holdLUms -= hdt; }
+    if (_holdLDms > 0) { ld = true; _holdLDms -= hdt; }
+    if (_holdRUms > 0) { ru = true; _holdRUms -= hdt; }
+    if (_holdRDms > 0) { rd = true; _holdRDms -= hdt; }
+
     integratePosition(dt, lu, ld, ru, rd, p);
     _r->apply(lu, ld, ru, rd);
   }
@@ -445,6 +460,7 @@ private:
   void setState(State s) {
     _state = s; _stateTimeMs = 0;
     if (s == State::ACTIVE) { _integ = 0; _integSide = Side::NONE; _filtTarget = 0; }
+    _holdLUms = _holdLDms = _holdRUms = _holdRDms = 0;
   }
   void integratePosition(float dt, bool lu, bool ld, bool ru, bool rd, const AutotrimParams &p) {
     float dms = dt * 1000.0f;
@@ -460,7 +476,8 @@ private:
   float   _stateTimeMs = 0, _posLeftMs = 0, _posRightMs = 0;
   float   _integ = 0; Side _integSide = Side::NONE; float _filtTarget = 0;
   bool    _autoLatched = false; float _recalMs = 0;
-  int     _testCh = -1; float _testMs = 0;     // manuell relé-test (testmodus)
+  int     _testCh = -1; float _testMs = 0;
+  float   _holdLUms = 0, _holdLDms = 0, _holdRUms = 0, _holdRDms = 0;
 };
 
 // ============================================================================
