@@ -39,6 +39,7 @@
   .pos-v{width:100%;height:100px;background:#0a1120;border-radius:6px;border:1px solid var(--line);position:relative;overflow:hidden}
   .pos-v > div{position:absolute;top:0;left:4px;right:4px;height:4px;background:var(--ok);border-radius:2px;transition:top .12s linear}
   .relaybtns button{font-size:16px;padding:16px 10px}
+  .relay-btn.relay-on{background:var(--ok)!important;color:#04231a!important;border-color:var(--ok)!important;opacity:1!important}
   fieldset{border:1px solid var(--line);border-radius:12px;margin:10px 0;padding:10px 12px}
   legend{color:var(--sub);font-size:12px;padding:0 6px;text-transform:uppercase;letter-spacing:.04em}
   .row{display:flex;align-items:center;gap:6px;margin:10px 0 2px}
@@ -78,7 +79,7 @@
     </div>
     <div class="card"><div class="lbl">Rollrate</div><div class="val"><span id="rate">–</span><span class="unit"> °/s</span></div></div>
     <div class="card"><div class="lbl">Fart (SOG)</div><div class="val"><span id="sog">–</span><span class="unit"> kn</span></div></div>
-    <div class="card"><div class="lbl">Tilstand</div><div class="state" id="state">–</div></div>
+    <div class="card"><div class="lbl">Tilstand</div><div class="state" id="state">–</div><div class="muted" id="fFlags" style="font-size:10px;margin-top:2px">–</div></div>
     <div class="card"><div class="lbl">GPS</div><div class="val" style="font-size:20px"><span id="fix">–</span> · <span id="sats">–</span><span class="unit"> sats</span></div></div>
     <div class="card full">
       <div class="lbl">Plan-posisjon (estimat)</div>
@@ -95,14 +96,6 @@
         </div>
       </div>
     </div>
-    <div class="card full">
-      <div class="lbl">Reléer</div>
-      <div class="relays" style="margin-top:6px">
-        <span class="pill" id="rLU">LU</span><span class="pill" id="rLD">LD</span>
-        <span class="pill" id="rRU">RU</span><span class="pill" id="rRD">RD</span>
-        <span class="pill" id="fFlags" style="margin-left:auto">feil: –</span>
-      </div>
-    </div>
   </div>
 
   <!-- DRIFT + TEST -->
@@ -114,13 +107,13 @@
     </div>
     <p class="hint">Autotrim engasjerer ved fart > «Fart på» og GPS-fix. Debug kobler ut disse kravene for benk-test — slås alltid av ved omstart.</p>
     <div class="relaybtns" style="margin-top:10px">
-      <button class="sec relay-btn" data-cmd="10" disabled>⬆ L UP</button>
-      <button class="sec relay-btn" data-cmd="12" disabled>⬆ R UP</button>
-      <button class="sec relay-btn" data-cmd="11" disabled>⬇ L DOWN</button>
-      <button class="sec relay-btn" data-cmd="13" disabled>⬇ R DOWN</button>
+      <button id="btnLU" class="sec relay-btn" data-cmd="10" disabled>⬆ LEFT UP</button>
+      <button id="btnRU" class="sec relay-btn" data-cmd="12" disabled>⬆ RIGHT UP</button>
+      <button id="btnLD" class="sec relay-btn" data-cmd="11" disabled>⬇ LEFT DOWN</button>
+      <button id="btnRD" class="sec relay-btn" data-cmd="13" disabled>⬇ RIGHT DOWN</button>
     </div>
-    <p id="relayHint" class="hint" style="margin-top:6px">Relé-knappene aktiveres når Debug er på.</p>
-    <button class="sec big" data-cmd="1" disabled style="margin-top:8px">⬆ Begge plan opp (nøytral)</button>
+    <p id="relayHint" class="hint" style="margin-top:6px">Relé-knappene aktiveres når Debug er på. Lyser grønt ved aktivt relé — også fra automatikken.</p>
+    <button class="sec big" data-cmd="1" disabled style="margin-top:8px">⬆ NEUTRAL / HOME</button>
   </fieldset>
 
   <!-- PARAMETERE -->
@@ -165,7 +158,7 @@
     <p class="hint">Fortegn for roll og gyro. Endre rollSign hvis tilting mot styrbord vises som babord (eller omvendt).</p>
 
     <div class="bar"><button id="btnSendParams" disabled>Send parametere</button>
-      <button class="sec" id="btnReload" disabled>Les på nytt</button></div>
+      <button class="sec" id="btnReload" disabled>Les parametre</button></div>
     <p class="hint">Send lagrer permanent i MCU (NVS). Les på nytt henter gjeldende MCU-verdier tilbake — nyttig for å forkaste usendede UI-endringer.</p>
   </fieldset>
 
@@ -306,10 +299,10 @@ function renderTele(dv){
   const pL=(posL*94).toFixed(1), pR=(posR*94).toFixed(1);
   $("posL").style.top=pL+"%"; $("posLtxt").textContent=(posL*100).toFixed(0)+"%";
   $("posR").style.top=pR+"%"; $("posRtxt").textContent=(posR*100).toFixed(0)+"%";
-  [["rLU",0],["rLD",1],["rRU",2],["rRD",3]].forEach(([id,bit])=>{
-    $(id).className = "pill" + ((relayBits>>bit & 1) ? " on" : "");
+  [["btnLU",0],["btnLD",1],["btnRU",2],["btnRD",3]].forEach(([id,bit])=>{
+    const b=$(id); if(b) b.classList.toggle('relay-on', (relayBits>>bit&1)!==0);
   });
-  $("fFlags").textContent = "feil: " + (faults===0 ? "ingen" : faults.toString(2).padStart(3,"0"));
+  $("fFlags").textContent = faults===0 ? "" : "feil: "+faults.toString(2).padStart(3,"0");
 }
 
 async function loadParams(){
