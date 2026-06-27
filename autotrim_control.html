@@ -214,7 +214,10 @@ async function connect(){
     chTele.addEventListener("characteristicvaluechanged", e=>renderTele(e.target.value));
     await loadParams();
     setConnected(true);
-  }catch(err){ alert("Tilkobling feilet: "+err); }
+  }catch(err){
+    if(err.name==='NotFoundError') return;
+    toast("Tilkobling feilet: "+err,"err");
+  }
 }
 
 async function disconnect(){
