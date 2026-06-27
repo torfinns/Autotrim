@@ -63,7 +63,7 @@ $cli = "C:\Program Files\Arduino IDE\resources\app\lib\backend\resources\arduino
 | Offset | Felt | Type | Merknad |
 |---|---|---|---|
 | 0 | magic | uint16 | 0xA770 |
-| 2 | version | uint8 | = 2 |
+| 2 | version | uint8 | **= 2** — firmware avviser stille hvis GUI sender annen verdi |
 | 3 | autoEnabled | uint8 | |
 | 4–44 | speedOnKn … neutralFrac | float×11 | |
 | 48 | rollSign | int8 | |
@@ -71,3 +71,5 @@ $cli = "C:\Program Files\Arduino IDE\resources\app\lib\backend\resources\arduino
 | 50 | testBypass | uint8 | Debug-flagg |
 | 51 | (reserved) | uint8 | |
 | 52 | mountingOffsetDeg | float | Kompenserer for skjev sensormontering |
+
+> **OBS:** Når struct utvides og PARAMS_VERSION bumpes i firmware, må `buildParams()` i GUI-et oppdateres tilsvarende (`dv.setUint8(2, <ny versjon>)`). Mismatch gir ingen feilmelding — parametre skrives ikke.
