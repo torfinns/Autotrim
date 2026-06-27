@@ -376,7 +376,9 @@ public:
     switch (_state) {
       case State::BOOT_UP: {
         lu = true; ru = true;
-        if (_stateTimeMs >= STARTUP_UP_MS) { _posLeftMs = 0; _posRightMs = 0; setState(State::STANDBY); }
+        // Kjør lenge nok til at planene garantert er helt oppe, uansett startposisjon.
+        float bootUpMs = max((float)STARTUP_UP_MS, p.fullStrokeMs * 1.2f);
+        if (_stateTimeMs >= bootUpMs) { _posLeftMs = 0; _posRightMs = 0; setState(State::STANDBY); }
         break;
       }
       case State::FAULT:
@@ -418,6 +420,9 @@ public:
 
         // Innenfor dødbånd: plan holder fysisk posisjon — ingen regulering.
         if (eMag == 0) break;
+
+        // Anti-windup: ved retningsskifte starter vi fra nøytral — ingen "motbakke".
+        if (eMag * _trimFrac < -1e-6f) _trimFrac = 0;
 
         // Diskret integrasjon: én beslutning per SETTLE-syklus.
         // Inne i dødbånd: eMag=0 → ingen endring → plan holder posisjon.
