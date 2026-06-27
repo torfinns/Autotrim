@@ -333,8 +333,11 @@ private:
 //  CONTROL  (fra control.h/.cpp) — state machine, fartslås, regulator
 // ============================================================================
 static const float POS_DEADBAND_MS      = 120.0f;
-static const float SETTLE_AFTER_MOVE_MS = 1500.0f;  // vent etter pådrag — båt/plan trenger tid
+static const float SETTLE_AFTER_MOVE_MS = 1500.0f;  // settle for liten feil
+static const float SETTLE_BIG_ERR_MS   =  500.0f;  // settle for stor feil (rask innregulering)
 static const float CTRL_STEP_DT         = 0.50f;    // effektivt integrasjons-dt per beslutning
+static const float BIG_ERR_DEG          = 3.0f;     // feil > dette → aggressiv puls
+static const float MAX_PULSE_MS         = 4000.0f;  // maks enkelt-puls ved stor feil
 
 class Control {
 public:
@@ -435,23 +438,34 @@ public:
         _active = (_trimFrac >  0.02f) ? Side::LEFT
                 : (_trimFrac < -0.02f) ? Side::RIGHT : Side::NONE;
 
-        // Sekvensering: den aktive siden går ALDRI ned mens motparten ikke er
-        // nesten helt oppe (< 10% av fullstroke). Trekk motparten opp først.
+        // Aggressivitet: stor feil (|e| > 3°) → kjør til mål i én lang puls + kort settle.
+        // Liten feil → 500ms minimumspuls + 1,5s settle (rolig innregulering).
+        bool bigErr = (fabsf(e) > BIG_ERR_DEG);
+        float effectiveSettle = bigErr ? SETTLE_BIG_ERR_MS : SETTLE_AFTER_MOVE_MS;
+
+        // Hjelpemakro: sett hold-timer direkte ved stor feil (kjør til mål),
+        // ellers bare sett boolean (hold-timer-logikken setter MIN_RELAY_ON_MS).
+        #define SET_RELAY(holdVar, flag, delta) \
+          if (bigErr) holdVar = max(holdVar, min((float)(delta), MAX_PULSE_MS)); \
+          else flag = true;
+
+        // Sekvensering: motpart må være < 10% av fullstroke før aktiv side kjøres ned.
         const float retractThreshMs = p.fullStrokeMs * 0.10f;
         bool needMove = false;
 
         if (tgtLeftMs > POS_DEADBAND_MS && _posRightMs > retractThreshMs) {
-          ru = true; needMove = true;   // høyre ikke oppe nok — trekk opp før venstre ned
+          SET_RELAY(_holdRUms, ru, _posRightMs); needMove = true;
         } else if (tgtRightMs > POS_DEADBAND_MS && _posLeftMs > retractThreshMs) {
-          lu = true; needMove = true;   // venstre ikke oppe nok — trekk opp før høyre ned
+          SET_RELAY(_holdLUms, lu, _posLeftMs);  needMove = true;
         } else {
-          if (_posLeftMs  < tgtLeftMs  - POS_DEADBAND_MS) { ld = true; needMove = true; }
-          else if (_posLeftMs  > tgtLeftMs  + POS_DEADBAND_MS) { lu = true; needMove = true; }
-          if (_posRightMs < tgtRightMs - POS_DEADBAND_MS) { rd = true; needMove = true; }
-          else if (_posRightMs > tgtRightMs + POS_DEADBAND_MS) { ru = true; needMove = true; }
+          if      (_posLeftMs  < tgtLeftMs  - POS_DEADBAND_MS) { SET_RELAY(_holdLDms, ld, tgtLeftMs  - _posLeftMs);  needMove = true; }
+          else if (_posLeftMs  > tgtLeftMs  + POS_DEADBAND_MS) { SET_RELAY(_holdLUms, lu, _posLeftMs  - tgtLeftMs);  needMove = true; }
+          if      (_posRightMs < tgtRightMs - POS_DEADBAND_MS) { SET_RELAY(_holdRDms, rd, tgtRightMs - _posRightMs); needMove = true; }
+          else if (_posRightMs > tgtRightMs + POS_DEADBAND_MS) { SET_RELAY(_holdRUms, ru, _posRightMs - tgtRightMs); needMove = true; }
         }
+        #undef SET_RELAY
 
-        if (needMove) _settleMs = SETTLE_AFTER_MOVE_MS;
+        if (needMove) _settleMs = effectiveSettle;
         break;
       }
     }
