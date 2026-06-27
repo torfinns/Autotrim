@@ -43,7 +43,7 @@ struct AutotrimParams;
 // I2C (BNO055)
 static const int PIN_I2C_SDA = 21;
 static const int PIN_I2C_SCL = 22;
-static const int PIN_BNO_RST = 4;     // valgfri; sett -1 om ikke koblet
+static const int PIN_BNO_RST = -1;    // ikke koblet — BNO055 bruker intern POR
 
 // UART2 (TBS M10N GPS). GPS TX -> ESP RX, GPS RX -> ESP TX
 static const int PIN_GPS_RX  = 16;    // ESP RX2 <- GPS TX
