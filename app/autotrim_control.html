@@ -42,9 +42,10 @@
   .row label{flex:1;font-size:14px}
   .row input[type=number]{width:90px;background:#0a1120;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px;font-size:15px;text-align:right}
   .hint{color:var(--sub);font-size:11px;margin:0 0 6px}
-  .switch{display:flex;align-items:center;gap:12px;font-size:16px;font-weight:600}
-  .switch input{width:22px;height:22px}
   .relaybtns{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+  .btn-toggle{background:var(--pill);color:var(--sub);border:1px solid var(--line)}
+  .btn-toggle.active-ok{background:var(--ok);color:#04231a;border-color:var(--ok)}
+  .btn-toggle.active-warn{background:var(--warn);color:#2a1800;border-color:var(--warn)}
   details{margin:10px 0;border:1px solid var(--line);border-radius:12px;padding:0 12px}
   details>summary{cursor:pointer;color:var(--sub);font-size:13px;font-weight:600;padding:12px 0;text-transform:uppercase;letter-spacing:.04em}
   .warnbar{background:#3a2410;border:1px solid var(--warn);color:#ffd98a;font-size:12px;border-radius:8px;padding:8px;margin:8px 0}
@@ -95,27 +96,26 @@
   <!-- DRIFT -->
   <fieldset>
     <legend>Drift</legend>
-    <label class="switch"><input type="checkbox" id="autoEnabled"> Autotrim på</label>
-    <p class="hint">Slår automatikken av/på. Lagres med en gang. Aktiveres bare når fart > «Fart på» og GPS har fix.</p>
+    <button id="btnAuto" class="btn-toggle big" disabled>Autotrim: AV</button>
+    <p class="hint">Slår automatikken av/på. Aktiveres bare når fart > «Fart på» og GPS har fix (eller Debug er på).</p>
     <button class="sec big" data-cmd="1" disabled>⬆ Begge plan opp (nøytral)</button>
     <p class="hint">Kjører begge plan helt opp — bruk når du vil nullstille / sikre nøytral.</p>
   </fieldset>
 
   <!-- TEST -->
-  <details>
-    <summary>Test &amp; diagnose</summary>
-    <div class="warnbar">Testmodus overstyrer fart- og GPS-kravet så automatikken kan engasjere på land/benk. Reléene vil da bevege planene ved tilt. Skru AV før normal bruk (slås uansett av ved omstart).</div>
-    <label class="switch"><input type="checkbox" id="testBypass"> Testmodus (overstyr fart + GPS)</label>
-    <p class="hint">Når på: vipp IMU-en og se at riktig plan kjøres ned (styrbord lav → høyre ned, babord lav → venstre ned).</p>
-    <p class="muted" style="margin-top:10px">Manuell relé-puls (≈1,5 s, kun i testmodus):</p>
-    <div class="relaybtns">
-      <button class="sec" data-cmd="10" disabled>LU – venstre opp</button>
-      <button class="sec" data-cmd="11" disabled>LD – venstre ned</button>
-      <button class="sec" data-cmd="12" disabled>RU – høyre opp</button>
-      <button class="sec" data-cmd="13" disabled>RD – høyre ned</button>
+  <fieldset>
+    <legend>Test</legend>
+    <button id="btnDebug" class="btn-toggle big" disabled>Debug: AV</button>
+    <p class="hint">Kobler ut farts- og GPS-krav så automatikken og reléene kan testes på benk. Slås alltid av ved omstart.</p>
+    <div class="relaybtns" style="margin-top:10px">
+      <button class="sec relay-btn" data-cmd="10" disabled>⬆ Venstre opp</button>
+      <button class="sec relay-btn" data-cmd="11" disabled>⬇ Venstre ned</button>
+      <button class="sec relay-btn" data-cmd="12" disabled>⬆ Høyre opp</button>
+      <button class="sec relay-btn" data-cmd="13" disabled>⬇ Høyre ned</button>
     </div>
-    <button class="sec" data-cmd="14" disabled style="width:100%;margin-top:8px">⏹ Stopp alle</button>
-  </details>
+    <button class="sec relay-btn" data-cmd="14" disabled style="width:100%;margin-top:8px">⏹ Stopp alle</button>
+    <p id="relayHint" class="hint" style="color:var(--sub);margin-top:6px">Aktiver Debug for å bruke relé-knappene.</p>
+  </fieldset>
 
   <!-- PARAMETERE -->
   <fieldset>
@@ -174,6 +174,7 @@ const CMD_NAMES = {1:"Begge opp",2:"Re-kalibrer",4:"Nullstill roll",
                    10:"LU",11:"LD",12:"RU",13:"RD",14:"Stopp"};
 
 let device=null, chParams=null, chTele=null, chCmd=null, params=null;
+let autoActive=false, debugActive=false, connected=false;
 const $ = id => document.getElementById(id);
 const PARAM_FIELDS = [
   ["speedOnKn",4],["speedOffKn",8],["rollSetpointDeg",12],["rollDeadbandDeg",16],
@@ -181,16 +182,37 @@ const PARAM_FIELDS = [
   ["maxDeployFrac",40],["neutralFrac",44]
 ];
 
+function updateRelayBtns(){
+  const en = connected && debugActive;
+  document.querySelectorAll(".relay-btn").forEach(b=>b.disabled=!en);
+  $("relayHint").style.display = (!connected || debugActive) ? "none" : "";
+}
+
+function updateAutoBtn(){
+  const b=$("btnAuto");
+  b.textContent = autoActive ? "Autotrim: PÅ" : "Autotrim: AV";
+  b.className = "btn-toggle big" + (autoActive?" active-ok":"");
+}
+
+function updateDebugBtn(){
+  const b=$("btnDebug");
+  b.textContent = debugActive ? "Debug: PÅ" : "Debug: AV";
+  b.className = "btn-toggle big" + (debugActive?" active-warn":"");
+  updateRelayBtns();
+}
+
 function setConnected(on){
+  connected = on;
   $("status").textContent = on ? "tilkoblet" : "frakoblet";
   $("status").className = "status " + (on?"on":"off");
   $("btnConnect").disabled = on;
   $("btnDisconnect").disabled = !on;
   $("btnSendParams").disabled = !on;
   $("btnReload").disabled = !on;
-  $("autoEnabled").disabled = !on;
-  $("testBypass").disabled = !on;
-  document.querySelectorAll("[data-cmd]").forEach(b=>b.disabled=!on);
+  $("btnAuto").disabled = !on;
+  $("btnDebug").disabled = !on;
+  document.querySelectorAll("[data-cmd]:not(.relay-btn)").forEach(b=>b.disabled=!on);
+  updateRelayBtns();
 }
 
 let toastTimer=null;
@@ -258,8 +280,10 @@ function renderTele(dv){
 async function loadParams(){
   const dv = await chParams.readValue();
   params = dv.buffer.slice(0);
-  $("autoEnabled").checked = dv.getUint8(3)===1;
-  $("testBypass").checked  = dv.getUint8(50)===1;
+  autoActive  = dv.getUint8(3)===1;
+  debugActive = dv.getUint8(50)===1;
+  updateAutoBtn();
+  updateDebugBtn();
   PARAM_FIELDS.forEach(([id,off])=> $(id).value = +dv.getFloat32(off,true).toFixed(4));
   const rs = dv.getInt8(48), gs = dv.getInt8(49);
   $("signs").textContent = `rollSign ${rs>=0?'+':''}${rs} · gyroSign ${gs>=0?'+':''}${gs}`;
@@ -269,8 +293,8 @@ function buildParams(){
   const buf = params ? params.slice(0) : new ArrayBuffer(52);
   const dv = new DataView(buf);
   dv.setUint16(0,0xA770,true); dv.setUint8(2,1);
-  dv.setUint8(3,  $("autoEnabled").checked ? 1:0);
-  dv.setUint8(50, $("testBypass").checked  ? 1:0);
+  dv.setUint8(3,  autoActive  ? 1:0);
+  dv.setUint8(50, debugActive ? 1:0);
   PARAM_FIELDS.forEach(([id,off])=> dv.setFloat32(off, parseFloat($(id).value)||0, true));
   return buf;
 }
@@ -297,8 +321,8 @@ $("btnConnect").onclick = connect;
 $("btnDisconnect").onclick = disconnect;
 $("btnReload").onclick = loadParams;
 $("btnSendParams").onclick = sendParams;
-$("autoEnabled").onchange = sendParams;     // bryteren sender seg selv
-$("testBypass").onchange  = sendParams;
+$("btnAuto").onclick = async ()=>{ autoActive=!autoActive; updateAutoBtn(); await sendParams(); };
+$("btnDebug").onclick = async ()=>{ debugActive=!debugActive; updateDebugBtn(); await sendParams(); };
 document.querySelectorAll("[data-cmd]").forEach(b=> b.onclick=()=>sendCmd(+b.dataset.cmd));
 
 if(!navigator.bluetooth){
