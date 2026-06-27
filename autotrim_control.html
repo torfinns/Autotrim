@@ -150,12 +150,7 @@
         <option value="-1">−1</option><option value="1">+1</option>
       </select>
     </div>
-    <div class="row"><label>gyroSign</label><span class="dotfill"></span>
-      <select id="gyroSign" style="background:#0a1120;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px;font-size:15px">
-        <option value="-1">−1</option><option value="1">+1</option>
-      </select>
-    </div>
-    <p class="hint">Fortegn for roll og gyro. Endre rollSign hvis tilting mot styrbord vises som babord (eller omvendt).</p>
+    <p class="hint">Fortegn for roll og gyro (brukes til begge). Endre hvis tilting mot styrbord vises som babord.</p>
 
     <div class="bar"><button id="btnSendParams" disabled>Send parametere</button>
       <button class="sec" id="btnReload" disabled>Les parametre</button></div>
@@ -314,7 +309,6 @@ async function loadParams(){
   updateDebugBtn();
   PARAM_FIELDS.forEach(([id,off,sc])=> $(id).value = +(dv.getFloat32(off,true)*(sc||1)).toFixed(4));
   $("rollSign").value = dv.getInt8(48);
-  $("gyroSign").value = dv.getInt8(49);
 }
 
 function buildParams(){
@@ -325,7 +319,7 @@ function buildParams(){
   dv.setUint8(50, debugActive ? 1:0);
   PARAM_FIELDS.forEach(([id,off,sc])=> dv.setFloat32(off, (parseFloat($(id).value)||0)/(sc||1), true));
   dv.setInt8(48, parseInt($("rollSign").value));
-  dv.setInt8(49, parseInt($("gyroSign").value));
+  dv.setInt8(49, parseInt($("rollSign").value));
   return buf;
 }
 

@@ -222,7 +222,7 @@ public:
     _sane = (amag > 4.0f && amag < 25.0f) && !isnan(amag);
 
     float rollAcc = atan2f(_aY, _aX) * 57.2957795f * (float)p.rollSign;
-    _rate = g.z() * (float)p.gyroSign;
+    _rate = g.z() * (float)p.rollSign;
 
     if (!_init) { _roll = rollAcc; _init = true; return; }
     float a_alpha = constrain(p.fusionAlpha, 0.5f, 0.9999f);
