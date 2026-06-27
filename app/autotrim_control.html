@@ -311,7 +311,7 @@ async function loadParams(){
 function buildParams(){
   const buf = params ? params.slice(0) : new ArrayBuffer(56);
   const dv = new DataView(buf);
-  dv.setUint16(0,0xA770,true); dv.setUint8(2,1);
+  dv.setUint16(0,0xA770,true); dv.setUint8(2,2);
   dv.setUint8(3,  autoActive  ? 1:0);
   dv.setUint8(50, debugActive ? 1:0);
   PARAM_FIELDS.forEach(([id,off])=> dv.setFloat32(off, parseFloat($(id).value)||0, true));
