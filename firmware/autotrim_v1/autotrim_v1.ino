@@ -416,6 +416,9 @@ public:
         if      (e >  p.rollDeadbandDeg) eMag = -(e - p.rollDeadbandDeg);  // styrbord lav → mer høyre
         else if (e < -p.rollDeadbandDeg) eMag = -(e + p.rollDeadbandDeg);  // babord lav  → mer venstre
 
+        // Innenfor dødbånd: plan holder fysisk posisjon — ingen regulering.
+        if (eMag == 0) break;
+
         // Diskret integrasjon: én beslutning per SETTLE-syklus.
         // Inne i dødbånd: eMag=0 → ingen endring → plan holder posisjon.
         _trimFrac += p.kP * eMag * CTRL_STEP_DT;
