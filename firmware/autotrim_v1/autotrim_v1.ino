@@ -30,6 +30,8 @@
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 #include <NimBLEDevice.h>
+#include <nvs_flash.h>
+#include <esp_system.h>
 
 // Forward-deklarasjon: trygt mot Arduino sin auto-prototyp-generering
 // (params-funksjonene tar AutotrimParams& før structen evt. er sett).
@@ -584,6 +586,17 @@ static void publishTelemetry() {
 
 void setup() {
   Serial.begin(115200);
+
+  // Auto-recovery: slett stale NimBLE NVS hvis forrige boot krasjet, start om
+  esp_reset_reason_t resetReason = esp_reset_reason();
+  if (resetReason == ESP_RST_PANIC ||
+      resetReason == ESP_RST_INT_WDT ||
+      resetReason == ESP_RST_TASK_WDT) {
+    Serial.println("KRASJ oppdaget — sletter NVS og starter om...");
+    delay(100);
+    nvs_flash_erase();
+    ESP.restart();
+  }
 
   relays.begin();        // 1) trygt: alle reléer av
   params_load(params);   // 2) parametere
