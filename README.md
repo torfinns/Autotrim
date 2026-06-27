@@ -52,7 +52,22 @@ $cli = "C:\Program Files\Arduino IDE\resources\app\lib\backend\resources\arduino
 
 `app/autotrim_control.html` hostes på GitHub Pages (krever HTTPS for Web Bluetooth på mobil). Åpnes i Chrome, kobler til BLE-enheten «Autotrim».
 
-**Knapper:**
+**Knapper og funksjoner:**
 - **Autotrim: PÅ/AV** — toggle for autoEnabled (grønn = aktiv)
 - **Debug: PÅ/AV** — kobler ut farts- og GPS-krav (oransje = aktiv); slås alltid av ved omstart
 - **Venstre/Høyre opp/ned** — manuell relé-puls (≈1,5 s); aktiveres kun når Debug er på
+- **Gjenopprett anbefalte verdier** — nedtrekksmeny med tre preset-sett (Fabrikk/Sport/Glatt); laster verdier inn i feltene uten å sende til MCU
+
+**AutotrimParams struct (56 bytes, PARAMS_VERSION=2):**
+
+| Offset | Felt | Type | Merknad |
+|---|---|---|---|
+| 0 | magic | uint16 | 0xA770 |
+| 2 | version | uint8 | = 2 |
+| 3 | autoEnabled | uint8 | |
+| 4–44 | speedOnKn … neutralFrac | float×11 | |
+| 48 | rollSign | int8 | |
+| 49 | gyroSign | int8 | |
+| 50 | testBypass | uint8 | Debug-flagg |
+| 51 | (reserved) | uint8 | |
+| 52 | mountingOffsetDeg | float | Kompenserer for skjev sensormontering |
