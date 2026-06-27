@@ -132,13 +132,9 @@
     <div class="row"><label>Dødbånd (°)</label><span class="dotfill"></span><input type="number" id="rollDeadbandDeg" step="0.1"></div>
     <p class="hint">Ingen korrigering så lenge rollen er innenfor ± dette rundt settpunktet. Hindrer jaging.</p>
     <div class="row"><label>kP (×100)</label><span class="dotfill"></span><input type="number" id="kP" step="0.5" min="0"></div>
-    <p class="hint">Proporsjonalledd: hvor kraftig den svarer på avvik. Typisk 3–15. Høyere = raskere, men kan overskyte.</p>
-    <div class="row"><label>kI (×100)</label><span class="dotfill"></span><input type="number" id="kI" step="0.1" min="0"></div>
-    <p class="hint">Integralledd: fjerner vedvarende slagside over tid. Typisk 0,2–2. For høy → treg svingning.</p>
+    <p class="hint">Proporsjonalledd: hvor kraftig den svarer på avvik. Typisk 5–20. Høyere = raskere, men kan overskyte.</p>
     <div class="row"><label>Fusjon-alpha</label><span class="dotfill"></span><input type="number" id="fusionAlpha" step="0.005"></div>
     <p class="hint">Komplementærfilter (0,90–0,999): vekt på gyro vs. akselerometer.</p>
-    <div class="row"><label>Pådrag-tau (s)</label><span class="dotfill"></span><input type="number" id="cmdTauSec" step="0.5"></div>
-    <p class="hint">Lavpass på pådraget. Høyere = roligere plan, lar bølger passere uten å jage dem.</p>
     <div class="row"><label>Full slaglengde (ms)</label><span class="dotfill"></span><input type="number" id="fullStrokeMs" step="100"></div>
     <p class="hint">Tid planet bruker fra helt opp til helt ned — brukes til posisjonsestimat.</p>
     <div class="row"><label>Maks deploy (0–1)</label><span class="dotfill"></span><input type="number" id="maxDeployFrac" step="0.05"></div>
@@ -200,7 +196,7 @@ const $ = id => document.getElementById(id);
 // [id, byteOffset, displayScale]  — displayScale: GUI = raw * scale; raw = GUI / scale
 const PARAM_FIELDS = [
   ["speedOnKn",4,1],["speedOffKn",8,1],["rollSetpointDeg",12,1],["mountingOffsetDeg",52,1],
-  ["rollDeadbandDeg",16,1],["kP",20,100],["kI",24,100],["fusionAlpha",28,1],["cmdTauSec",32,1],
+  ["rollDeadbandDeg",16,1],["kP",20,100],["fusionAlpha",28,1],
   ["fullStrokeMs",36,1],["maxDeployFrac",40,1],["neutralFrac",44,1]
 ];
 
@@ -344,18 +340,18 @@ async function sendCmd(code){
 const PRESETS = {
   default: {
     speedOnKn:4.0, speedOffKn:3.0, rollSetpointDeg:0.0, mountingOffsetDeg:0.0,
-    rollDeadbandDeg:1.5, kP:5.0, kI:0.5, fusionAlpha:0.98,
-    cmdTauSec:3.0, fullStrokeMs:6000, maxDeployFrac:0.8, neutralFrac:0.05
+    rollDeadbandDeg:1.5, kP:10.0, fusionAlpha:0.98,
+    fullStrokeMs:6000, maxDeployFrac:0.8, neutralFrac:0.05
   },
   sporty: {
     speedOnKn:3.0, speedOffKn:2.5, rollSetpointDeg:0.0, mountingOffsetDeg:0.0,
-    rollDeadbandDeg:0.8, kP:10.0, kI:1.0, fusionAlpha:0.96,
-    cmdTauSec:1.5, fullStrokeMs:6000, maxDeployFrac:0.9, neutralFrac:0.05
+    rollDeadbandDeg:0.8, kP:20.0, fusionAlpha:0.96,
+    fullStrokeMs:6000, maxDeployFrac:0.9, neutralFrac:0.05
   },
   smooth: {
     speedOnKn:4.0, speedOffKn:3.0, rollSetpointDeg:0.0, mountingOffsetDeg:0.0,
-    rollDeadbandDeg:2.5, kP:3.0, kI:0.2, fusionAlpha:0.995,
-    cmdTauSec:6.0, fullStrokeMs:6000, maxDeployFrac:0.7, neutralFrac:0.1
+    rollDeadbandDeg:2.5, kP:5.0, fusionAlpha:0.995,
+    fullStrokeMs:6000, maxDeployFrac:0.7, neutralFrac:0.1
   }
 };
 

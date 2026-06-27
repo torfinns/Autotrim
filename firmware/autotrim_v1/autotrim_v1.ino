@@ -419,7 +419,8 @@ public:
         else if (e < -p.rollDeadbandDeg) eMag = -(e + p.rollDeadbandDeg);  // babord lav  → mer venstre
 
         // Innenfor dødbånd: plan holder fysisk posisjon — ingen regulering.
-        if (eMag == 0) break;
+        // Nullstill settle-timer så neste feil responderes umiddelbart.
+        if (eMag == 0) { _settleMs = 0; break; }
 
         // Anti-windup: ved retningsskifte starter vi fra nøytral — ingen "motbakke".
         if (eMag * _trimFrac < -1e-6f) _trimFrac = 0;
