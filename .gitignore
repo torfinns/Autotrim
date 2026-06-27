@@ -1,0 +1,19 @@
+# Arduino / PlatformIO build-artefakter
+.pio/
+build/
+*.bin
+*.elf
+*.o
+*.d
+*.hex
+*.map
+
+# Arduino IDE / verktøy-cache
+**/.cache/
+.vscode/
+.theia/
+
+# OS-filer
+.DS_Store
+Thumbs.db
+desktop.ini

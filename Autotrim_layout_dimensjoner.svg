@@ -1,0 +1,149 @@
+<svg viewBox="0 0 1120 820" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .title{font-size:26px;font-weight:700;fill:#1b2a44}
+    .sub{font-size:13px;fill:#516079}
+    .mod{font-size:14px;font-weight:700;fill:#1b2a44}
+    .dim{font-size:12px;fill:#c0392b;font-weight:700}
+    .clr{font-size:12px;fill:#0e6e5d;font-weight:700}
+    .note{font-size:11px;fill:#516079}
+    .comp{fill:#dde7f3;stroke:#2b3a55;stroke-width:1.5}
+    .hot{fill:#fde2dd;stroke:#c0392b;stroke-width:1.5}
+    .imu{fill:#ffe9c9;stroke:#b9770e;stroke-width:2}
+    .encl{fill:#f7faff;stroke:#1b2a44;stroke-width:2.5}
+    .lid{fill:#eafaf4;stroke:#16a085;stroke-width:1.5;stroke-dasharray:6 4}
+    .dimline{stroke:#c0392b;stroke-width:1}
+    .clrline{stroke:#16a085;stroke-width:1;stroke-dasharray:4 3}
+    .term{fill:#fff;stroke:#2b3a55;stroke-width:1}
+    .tlbl{font-size:10px;fill:#1b2a44}
+  </style>
+
+  <text x="40" y="40" class="title">Autotrim — fysisk layout &amp; dimensjoner</text>
+  <text x="40" y="60" class="sub">Sett ovenfra. Skala 3 px = 1 mm. Mål er nominelle modulstørrelser — mål dine faktiske deler. To kapslinger: hovedboks + eget relékort.</text>
+  <text x="40" y="78" class="sub">Hovedprinsipp: IMU stivt montert og rettet etter båtaksene, i hjørnet lengst fra DC-DC (varme/svitsjestøy) og reléboks (magnetfelt). GPS ser himmel.</text>
+
+  <!-- ============ MAIN ENCLOSURE ============ -->
+  <text x="70" y="118" class="mod">Hovedboks (ESP32 + IMU + DC-DC)</text>
+  <!-- enclosure interior 150 x 100 mm -> 450 x 300 px -->
+  <rect x="70" y="130" width="450" height="300" class="encl" rx="6"/>
+
+  <!-- ESP32 breakout 78x63mm -> 234x189 (venstre) -->
+  <rect x="90" y="165" width="234" height="189" class="comp" rx="4"/>
+  <text x="207" y="252" text-anchor="middle" class="mod">ESP32 + breakout</text>
+  <text x="207" y="270" text-anchor="middle" class="note">78 × 63 mm</text>
+  <text x="207" y="286" text-anchor="middle" class="note">(USB-side mot kant)</text>
+
+  <!-- DC-DC 27x15mm -> 81x45 (ØVRE HØYRE hjørne = varmekilde) -->
+  <rect x="420" y="150" width="81" height="45" class="hot" rx="3"/>
+  <text x="460" y="170" text-anchor="middle" class="note">DC-DC</text>
+  <text x="460" y="185" text-anchor="middle" class="note">27×15</text>
+  <text x="460" y="145" text-anchor="middle" class="note" fill="#c0392b">varme/støy</text>
+
+  <!-- BNO055 22 x 10mm footprint -> 66 x 30 (NEDRE HØYRE hjørne, langt fra DC-DC) -->
+  <rect x="425" y="368" width="66" height="30" class="imu" rx="3"/>
+  <text x="458" y="384" text-anchor="middle" class="note" fill="#7a4d06">BNO055</text>
+  <text x="458" y="416" text-anchor="middle" class="note" fill="#7a4d06">LODDRETT · X opp · Y på tvers</text>
+  <!-- up arrow indicating X up -->
+  <line x1="500" y1="398" x2="500" y2="368" stroke="#8e44ad" stroke-width="2"/>
+  <polygon points="500,362 496,372 504,372" fill="#8e44ad"/>
+  <text x="508" y="372" class="note" fill="#8e44ad">X (opp)</text>
+
+  <!-- clearance dim between DC-DC bottom and BNO055 top (right side) -->
+  <line x1="408" y1="195" x2="408" y2="368" class="clrline"/>
+  <line x1="403" y1="195" x2="413" y2="195" class="clrline"/>
+  <line x1="403" y1="368" x2="413" y2="368" class="clrline"/>
+  <text x="404" y="285" class="clr" transform="rotate(90 404 285)" text-anchor="middle">≥ 40 mm fri</text>
+
+  <!-- cable glands -->
+  <circle cx="70" cy="195" r="6" fill="#2b3a55"/><text x="40" y="199" text-anchor="end" class="note">12V inn</text>
+  <circle cx="70" cy="375" r="6" fill="#2b3a55"/><text x="40" y="365" text-anchor="end" class="note">→ relékort</text>
+  <text x="40" y="379" text-anchor="end" class="note">(6 ledere)</text>
+
+  <!-- dim width 150mm -->
+  <line x1="70" y1="446" x2="520" y2="446" class="dimline"/>
+  <line x1="70" y1="441" x2="70" y2="451" class="dimline"/>
+  <line x1="520" y1="441" x2="520" y2="451" class="dimline"/>
+  <text x="295" y="462" text-anchor="middle" class="dim">innvendig ≥ 150 mm</text>
+  <!-- dim height 100mm -->
+  <line x1="540" y1="130" x2="540" y2="430" class="dimline"/>
+  <line x1="535" y1="130" x2="545" y2="130" class="dimline"/>
+  <line x1="535" y1="430" x2="545" y2="430" class="dimline"/>
+  <text x="556" y="285" class="dim" transform="rotate(90 556 285)" text-anchor="middle">innvendig ≥ 100 mm</text>
+
+  <!-- notes -->
+  <text x="70" y="486" class="note">Høyde innvendig ≥ 45 mm (ESP+USB ~30, standoff 5, IMU loddrett ~27, lokkklaring). Forslag: ABS IP65, innvendig ~150 × 100 × 50–60 mm.</text>
+  <text x="70" y="503" class="note" font-weight="700" fill="#7a4d06">IMU: egen stiv brakett/standoff, IKKE på samme print som DC-DC. Rettvinklet mot båtaksene. ≥40 mm til DC-DC og til reléboks.</text>
+
+  <!-- ============ GPS LID / ANTENNA CALLOUT ============ -->
+  <rect x="575" y="150" width="40" height="248" class="encl" rx="4" opacity="0.25"/>
+  <rect x="572" y="150" width="62" height="120" class="lid" rx="4"/>
+  <text x="603" y="176" text-anchor="middle" class="mod" fill="#0e6e5d">GPS</text>
+  <text x="603" y="194" text-anchor="middle" class="note" fill="#0e6e5d">TBS M10N</text>
+  <text x="603" y="208" text-anchor="middle" class="note" fill="#0e6e5d">25×25</text>
+  <text x="603" y="226" text-anchor="middle" class="note" fill="#0e6e5d">PÅ LOKK</text>
+  <text x="603" y="240" text-anchor="middle" class="note" fill="#0e6e5d">patch opp</text>
+  <text x="603" y="254" text-anchor="middle" class="note" fill="#0e6e5d">↑ himmel</text>
+  <line x1="603" y1="290" x2="603" y2="270" stroke="#16a085" stroke-width="2"/>
+  <polygon points="603,264 599,274 607,274" fill="#16a085"/>
+  <text x="572" y="320" class="note" fill="#0e6e5d">Monteres på lokket</text>
+  <text x="572" y="334" class="note" fill="#0e6e5d">eller ekstern antenne.</text>
+  <text x="572" y="348" class="note" fill="#0e6e5d">Krever fri sikt mot</text>
+  <text x="572" y="362" class="note" fill="#0e6e5d">himmel for fix. Hold</text>
+  <text x="572" y="376" class="note" fill="#0e6e5d">litt unna DC-DC (RF).</text>
+
+  <!-- ============ RELAY ENCLOSURE ============ -->
+  <text x="700" y="118" class="mod">Relékort (eget) — 4× reed-relé + skruterminaler</text>
+  <!-- interior 100 x 68 mm -> 300 x 204 px -->
+  <rect x="700" y="130" width="300" height="204" class="encl" rx="6"/>
+
+  <!-- 4 relay modules ~20x15mm -> 60x40, column -->
+  <g>
+    <rect x="720" y="145" width="60" height="40" class="comp" rx="3"/><text x="750" y="170" text-anchor="middle" class="note">K1 LU</text>
+    <rect x="720" y="193" width="60" height="40" class="comp" rx="3"/><text x="750" y="218" text-anchor="middle" class="note">K2 LD</text>
+    <rect x="720" y="241" width="60" height="40" class="comp" rx="3"/><text x="750" y="266" text-anchor="middle" class="note">K3 RU</text>
+    <rect x="720" y="289" width="60" height="40" class="comp" rx="3"/><text x="750" y="314" text-anchor="middle" class="note">K4 RD</text>
+  </g>
+  <text x="750" y="140" text-anchor="middle" class="note">reed-modul ~20×15 mm</text>
+
+  <!-- terminal block to Lenco (right) -->
+  <text x="920" y="143" text-anchor="middle" class="tlbl">→ Lenco</text>
+  <g>
+    <rect x="890" y="147" width="62" height="20" class="term"/><text x="921" y="161" text-anchor="middle" class="tlbl">svart 12V</text>
+    <rect x="890" y="171" width="62" height="20" class="term"/><text x="921" y="185" text-anchor="middle" class="tlbl">hvit LU</text>
+    <rect x="890" y="195" width="62" height="20" class="term"/><text x="921" y="209" text-anchor="middle" class="tlbl">rød LD</text>
+    <rect x="890" y="219" width="62" height="20" class="term"/><text x="921" y="233" text-anchor="middle" class="tlbl">brun RU</text>
+    <rect x="890" y="243" width="62" height="20" class="term"/><text x="921" y="257" text-anchor="middle" class="tlbl">grønn RD</text>
+  </g>
+  <!-- terminal block to main board -->
+  <g>
+    <rect x="805" y="289" width="80" height="20" class="term"/><text x="845" y="303" text-anchor="middle" class="tlbl">5V · GND</text>
+    <rect x="805" y="313" width="80" height="14" class="term"/><text x="845" y="324" text-anchor="middle" class="tlbl">IN1–IN4 (fra ESP)</text>
+  </g>
+
+  <!-- dim width 100mm -->
+  <line x1="700" y1="350" x2="1000" y2="350" class="dimline"/>
+  <line x1="700" y1="345" x2="700" y2="355" class="dimline"/>
+  <line x1="1000" y1="345" x2="1000" y2="355" class="dimline"/>
+  <text x="850" y="366" text-anchor="middle" class="dim">innvendig ≥ 100 mm</text>
+  <!-- dim height 68mm -->
+  <line x1="1020" y1="130" x2="1020" y2="334" class="dimline"/>
+  <line x1="1015" y1="130" x2="1025" y2="130" class="dimline"/>
+  <line x1="1015" y1="334" x2="1025" y2="334" class="dimline"/>
+  <text x="1036" y="232" class="dim" transform="rotate(90 1036 232)" text-anchor="middle">≥ 68 mm</text>
+
+  <text x="700" y="392" class="note">Forslag relékort-boks: innvendig ~100 × 68 × 40 mm. Skruterminaler: 5 mot Lenco (svart + 4 farger),</text>
+  <text x="700" y="409" class="note">6 mot hovedboks (5V, GND, IN1–IN4). COM på alle 4 reléer bygges sammen til «svart 12V».</text>
+  <text x="700" y="426" class="note" font-weight="700">Egen boks holder relé-magnetfelt unna IMU. Plasser ikke reléboksen inntil hovedboksens IMU-hjørne.</text>
+
+  <!-- ============ LEGEND ============ -->
+  <rect x="70" y="540" width="980" height="240" rx="8" fill="#eef2f8" stroke="#aab6cc" stroke-width="1.5"/>
+  <text x="90" y="568" class="mod">Stykkliste med nominelle mål (verifiser mot dine deler)</text>
+  <text x="90" y="596" class="note">• ESP32 (CP2102) + breakout-base:  ~78 × 63 × 10 mm (kort) + ESP/USB-høyde ~30 mm totalt</text>
+  <text x="90" y="616" class="note">• BNO055 IMU-kort:  ~21 × 27 mm — MONTERES LODDRETT (X opp, Y på tvers, Z = langskips, ut av kortet) på stiv brakett</text>
+  <text x="90" y="636" class="note">• TBS M10N GPS:  ~25 × 25 mm m/patch-antenne — krever fri sikt; monter på lokk (patch opp) eller med ekstern antenne</text>
+  <text x="90" y="656" class="note">• DC-DC buck 12-24→5V/3A:  ~27 × 15 × 8 mm — varme/svitsjestøy; hold ≥40 mm fra IMU og GPS</text>
+  <text x="90" y="676" class="note">• 4× reed-relé SIP-1A05-modul:  ~20 × 15 mm hver — eget kort med skruterminaler til Lenco (egen boks, vekk fra IMU)</text>
+  <text x="90" y="702" class="note" fill="#1b2a44" font-weight="700">Anbefalt: hovedboks innvendig ~150 × 100 × 50–60 mm (IP65 ABS) · relékort-boks ~100 × 68 × 40 mm.</text>
+  <text x="90" y="722" class="note" fill="#7a4d06" font-weight="700">Plasseringsregel: IMU i hjørnet lengst fra DC-DC og reléer; stiv montering; rettet etter båtaksene (fortegn avhenger av dette).</text>
+  <text x="90" y="742" class="note">GPS med fri sikt mot himmel. Sikring 2–3 A på 12V inn. Kabelgjennomføringer med pakning (marint miljø).</text>
+  <text x="90" y="762" class="note" fill="#516079">Fargekode: blå = elektronikk · rosa = varme/støykilde (DC-DC) · oransje = IMU (kritisk plassering) · grønn stiplet = på lokk.</text>
+</svg>
