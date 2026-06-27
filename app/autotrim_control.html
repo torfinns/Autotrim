@@ -147,8 +147,17 @@
     <p class="hint">Hvor langt ned et plan får kjøres. 0,8 = maks 80 %.</p>
     <div class="row"><label>Nøytral deploy (0–1)</label><span class="dotfill"></span><input type="number" id="neutralFrac" step="0.05"></div>
     <p class="hint">Hvileposisjon i STANDBY. 0 = helt opp.</p>
-    <div class="row"><label>rollSign / gyroSign</label><span class="dotfill"></span><span class="muted" id="signs">–</span></div>
-    <p class="hint">Fortegn-kalibrering (verifisert −1 / +1). Endres normalt ikke.</p>
+    <div class="row"><label>rollSign</label><span class="dotfill"></span>
+      <select id="rollSign" style="background:#0a1120;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px;font-size:15px">
+        <option value="-1">−1</option><option value="1">+1</option>
+      </select>
+    </div>
+    <div class="row"><label>gyroSign</label><span class="dotfill"></span>
+      <select id="gyroSign" style="background:#0a1120;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px;font-size:15px">
+        <option value="-1">−1</option><option value="1">+1</option>
+      </select>
+    </div>
+    <p class="hint">Fortegn for roll og gyro. Endre rollSign hvis tilting mot styrbord vises som babord (eller omvendt).</p>
 
     <div class="bar"><button id="btnSendParams" disabled>Send parametere</button>
       <button class="sec" id="btnReload" disabled>Les på nytt</button></div>
@@ -304,8 +313,8 @@ async function loadParams(){
   updateAutoBtn();
   updateDebugBtn();
   PARAM_FIELDS.forEach(([id,off])=> $(id).value = +dv.getFloat32(off,true).toFixed(4));
-  const rs = dv.getInt8(48), gs = dv.getInt8(49);
-  $("signs").textContent = `rollSign ${rs>=0?'+':''}${rs} · gyroSign ${gs>=0?'+':''}${gs}`;
+  $("rollSign").value = dv.getInt8(48);
+  $("gyroSign").value = dv.getInt8(49);
 }
 
 function buildParams(){
@@ -315,6 +324,8 @@ function buildParams(){
   dv.setUint8(3,  autoActive  ? 1:0);
   dv.setUint8(50, debugActive ? 1:0);
   PARAM_FIELDS.forEach(([id,off])=> dv.setFloat32(off, parseFloat($(id).value)||0, true));
+  dv.setInt8(48, parseInt($("rollSign").value));
+  dv.setInt8(49, parseInt($("gyroSign").value));
   return buf;
 }
 
