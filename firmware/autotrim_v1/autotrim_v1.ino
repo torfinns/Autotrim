@@ -434,11 +434,21 @@ public:
         _active = (_trimFrac >  0.02f) ? Side::LEFT
                 : (_trimFrac < -0.02f) ? Side::RIGHT : Side::NONE;
 
+        // Sekvensering: den aktive siden går ALDRI ned mens motparten ikke er
+        // nesten helt oppe (< 10% av fullstroke). Trekk motparten opp først.
+        const float retractThreshMs = p.fullStrokeMs * 0.10f;
         bool needMove = false;
-        if (_posLeftMs  < tgtLeftMs  - POS_DEADBAND_MS) { ld = true; needMove = true; }
-        else if (_posLeftMs  > tgtLeftMs  + POS_DEADBAND_MS) { lu = true; needMove = true; }
-        if (_posRightMs < tgtRightMs - POS_DEADBAND_MS) { rd = true; needMove = true; }
-        else if (_posRightMs > tgtRightMs + POS_DEADBAND_MS) { ru = true; needMove = true; }
+
+        if (tgtLeftMs > POS_DEADBAND_MS && _posRightMs > retractThreshMs) {
+          ru = true; needMove = true;   // høyre ikke oppe nok — trekk opp før venstre ned
+        } else if (tgtRightMs > POS_DEADBAND_MS && _posLeftMs > retractThreshMs) {
+          lu = true; needMove = true;   // venstre ikke oppe nok — trekk opp før høyre ned
+        } else {
+          if (_posLeftMs  < tgtLeftMs  - POS_DEADBAND_MS) { ld = true; needMove = true; }
+          else if (_posLeftMs  > tgtLeftMs  + POS_DEADBAND_MS) { lu = true; needMove = true; }
+          if (_posRightMs < tgtRightMs - POS_DEADBAND_MS) { rd = true; needMove = true; }
+          else if (_posRightMs > tgtRightMs + POS_DEADBAND_MS) { ru = true; needMove = true; }
+        }
 
         if (needMove) _settleMs = SETTLE_AFTER_MOVE_MS;
         break;
