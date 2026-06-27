@@ -482,9 +482,13 @@ namespace {
   class ParamsCB : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic *c, NimBLEConnInfo &info) override {
       NimBLEAttValue v = c->getValue();
+      Serial.printf("BLE params write: len=%d (want %d)\n", (int)v.length(), (int)sizeof(AutotrimParams));
       if (v.length() == sizeof(AutotrimParams) && gParams) {
         AutotrimParams tmp; memcpy(&tmp, v.data(), sizeof(tmp));
-        if (params_valid(tmp)) { *gParams = tmp; gParamsDirty = true; }
+        bool valid = params_valid(tmp);
+        Serial.printf("  magic=0x%04X ver=%d valid=%d mountOff=%.2f\n",
+                      tmp.magic, tmp.version, (int)valid, tmp.mountingOffsetDeg);
+        if (valid) { *gParams = tmp; gParamsDirty = true; }
       }
     }
   };
