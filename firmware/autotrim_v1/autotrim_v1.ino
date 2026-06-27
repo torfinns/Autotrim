@@ -332,7 +332,9 @@ private:
 // ============================================================================
 //  CONTROL  (fra control.h/.cpp) — state machine, fartslås, regulator
 // ============================================================================
-static const float POS_DEADBAND_MS = 120.0f;
+static const float POS_DEADBAND_MS      = 120.0f;
+static const float SETTLE_AFTER_MOVE_MS = 1500.0f;  // vent etter pådrag — båt/plan trenger tid
+static const float CTRL_STEP_DT         = 0.50f;    // effektivt integrasjons-dt per beslutning
 
 class Control {
 public:
@@ -400,15 +402,23 @@ public:
         bool keep = p.autoEnabled && imuSane && (gpsFix || bypass) && (_autoLatched || bypass);
         if (!keep) { requestBothUp(); setState(State::STANDBY); break; }
 
-        float e = rollDeg - p.rollSetpointDeg;   // e>0 => styrbord lav
+        _settleMs -= dt * 1000.0f;
+        if (_settleMs < 0) _settleMs = 0;
 
-        // Integreringsbasert kontroll: trimposisjonen akkumulerer feilen.
-        // Innenfor dødbånd: hold posisjon — IKKE trekk tilbake til nøytral.
-        // _trimFrac: positiv = babord (venstre) deployert, negativ = styrbord (høyre) deployert.
+        // Vent til alle hold-timere er ferdige OG settle-tid er utløpt.
+        // Garanterer at plan slutter å bevege seg og båten stabiliserer seg
+        // før neste beslutning. Ingen jaging / ping-pong mulig.
+        bool holdActive = (_holdLUms > 0 || _holdLDms > 0 || _holdRUms > 0 || _holdRDms > 0);
+        if (_settleMs > 0 || holdActive) break;
+
+        float e = rollDeg - p.rollSetpointDeg;   // e>0 => styrbord lav
         float eMag = 0;
         if      (e >  p.rollDeadbandDeg) eMag = -(e - p.rollDeadbandDeg);  // styrbord lav → mer høyre
         else if (e < -p.rollDeadbandDeg) eMag = -(e + p.rollDeadbandDeg);  // babord lav  → mer venstre
-        _trimFrac += p.kP * eMag * dt;
+
+        // Diskret integrasjon: én beslutning per SETTLE-syklus.
+        // Inne i dødbånd: eMag=0 → ingen endring → plan holder posisjon.
+        _trimFrac += p.kP * eMag * CTRL_STEP_DT;
         _trimFrac  = constrain(_trimFrac, -p.maxDeployFrac, p.maxDeployFrac);
 
         float tgtLeftMs  = max(0.0f,  _trimFrac) * p.fullStrokeMs;
@@ -416,10 +426,13 @@ public:
         _active = (_trimFrac >  0.02f) ? Side::LEFT
                 : (_trimFrac < -0.02f) ? Side::RIGHT : Side::NONE;
 
-        if (_posLeftMs  < tgtLeftMs  - POS_DEADBAND_MS) ld = true;
-        else if (_posLeftMs  > tgtLeftMs  + POS_DEADBAND_MS) lu = true;
-        if (_posRightMs < tgtRightMs - POS_DEADBAND_MS) rd = true;
-        else if (_posRightMs > tgtRightMs + POS_DEADBAND_MS) ru = true;
+        bool needMove = false;
+        if (_posLeftMs  < tgtLeftMs  - POS_DEADBAND_MS) { ld = true; needMove = true; }
+        else if (_posLeftMs  > tgtLeftMs  + POS_DEADBAND_MS) { lu = true; needMove = true; }
+        if (_posRightMs < tgtRightMs - POS_DEADBAND_MS) { rd = true; needMove = true; }
+        else if (_posRightMs > tgtRightMs + POS_DEADBAND_MS) { ru = true; needMove = true; }
+
+        if (needMove) _settleMs = SETTLE_AFTER_MOVE_MS;
         break;
       }
     }
@@ -452,7 +465,7 @@ private:
   static float clampFrac(float f) { return f < 0 ? 0 : (f > 1 ? 1 : f); }
   void setState(State s) {
     _state = s; _stateTimeMs = 0;
-    if (s == State::ACTIVE || s == State::STANDBY) { _trimFrac = 0; }
+    if (s == State::ACTIVE || s == State::STANDBY) { _trimFrac = 0; _settleMs = 0; }
     _holdLUms = _holdLDms = _holdRUms = _holdRDms = 0;
   }
   void integratePosition(float dt, bool lu, bool ld, bool ru, bool rd, const AutotrimParams &p) {
@@ -468,6 +481,7 @@ private:
   Side    _active = Side::NONE;
   float   _stateTimeMs = 0, _posLeftMs = 0, _posRightMs = 0;
   float   _trimFrac = 0;   // signert trimposisjon: + = babord deployert, - = styrbord deployert
+  float   _settleMs = 0;  // nedtelling etter pådrag — ingen ny beslutning mens > 0
   bool    _autoLatched = false; float _recalMs = 0;
   int     _testCh = -1; float _testMs = 0;
   float   _holdLUms = 0, _holdLDms = 0, _holdRUms = 0, _holdRDms = 0;
