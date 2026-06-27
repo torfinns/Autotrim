@@ -142,11 +142,12 @@ struct AutotrimParams {
   int8_t   gyroSign;
   uint8_t  testBypass;   // 0=normal, 1=overstyr fart+GPS-fix (kun benk-test; nullstilles ved boot)
   uint8_t  reserved1;
+  float    mountingOffsetDeg;   // monteringskorreksjon: legg til målt roll (grader)
 };
 #pragma pack(pop)
 
 static const uint16_t PARAMS_MAGIC   = 0xA770;
-static const uint8_t  PARAMS_VERSION = 1;
+static const uint8_t  PARAMS_VERSION = 2;
 
 void params_setDefaults(AutotrimParams &p) {
   p.magic           = PARAMS_MAGIC;
@@ -165,8 +166,9 @@ void params_setDefaults(AutotrimParams &p) {
   p.neutralFrac     = 0.0f;
   p.rollSign        = -1;           // benk-test 2026-06-24: styrbord-lav -> positiv roll
   p.gyroSign        = 1;            // verifisert konsistent med rollSign=-1
-  p.testBypass      = 0;            // testmodus av
-  p.reserved1       = 0;
+  p.testBypass         = 0;            // testmodus av
+  p.reserved1          = 0;
+  p.mountingOffsetDeg  = 0.0f;
 }
 
 bool params_valid(const AutotrimParams &p) {
@@ -566,7 +568,7 @@ static void handleCommands() {
 static void publishTelemetry() {
   Telemetry t{};
   t.millisUp     = millis();
-  t.rollDeg      = imuDev.rollDeg();
+  t.rollDeg      = imuDev.rollDeg() + params.mountingOffsetDeg;
   t.rollRateDps  = imuDev.rollRateDps();
   t.accX         = imuDev.accX();
   t.accY         = imuDev.accY();
@@ -627,7 +629,7 @@ void loop() {
     float dt = (now - tCtrl) / 1000.0f;
     tCtrl = now;
     bool imuSane = imuDev.ok() && imuDev.sane();
-    control.update(dt, imuDev.rollDeg(), imuDev.rollRateDps(), imuSane,
+    control.update(dt, imuDev.rollDeg() + params.mountingOffsetDeg, imuDev.rollRateDps(), imuSane,
                    gps.sogKn(), gps.hasFix(), params);
   }
   if (now - tTele >= TELE_PERIOD_MS) {
@@ -639,7 +641,7 @@ void loop() {
     tDbg = now;
     const char* st[] = {"BOOT_UP","STANDBY","ACTIVE","FAULT"};
     Serial.printf("roll:%+6.1f rate:%+6.1f | SOG:%4.1f fix:%d sats:%2d | %-7s rel:0x%X\n",
-                  imuDev.rollDeg(), imuDev.rollRateDps(), gps.sogKn(), gps.hasFix(), gps.sats(),
+                  imuDev.rollDeg() + params.mountingOffsetDeg, imuDev.rollRateDps(), gps.sogKn(), gps.hasFix(), gps.sats(),
                   st[(uint8_t)control.state() & 3], relays.bits());
   }
 }

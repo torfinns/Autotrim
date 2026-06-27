@@ -38,8 +38,9 @@
   .pos > div{height:100%;background:var(--accent);width:0%}
   fieldset{border:1px solid var(--line);border-radius:12px;margin:10px 0;padding:10px 12px}
   legend{color:var(--sub);font-size:12px;padding:0 6px;text-transform:uppercase;letter-spacing:.04em}
-  .row{display:flex;align-items:center;gap:10px;margin:10px 0 2px}
-  .row label{flex:1;font-size:14px}
+  .row{display:flex;align-items:center;gap:6px;margin:10px 0 2px}
+  .row label{font-size:14px;white-space:nowrap}
+  .dotfill{flex:1;height:0;border-bottom:1px dotted rgba(144,160,189,0.25);margin:0 4px;align-self:flex-end;margin-bottom:5px}
   .row input[type=number]{width:90px;background:#0a1120;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px;font-size:15px;text-align:right}
   .hint{color:var(--sub);font-size:11px;margin:0 0 6px}
   .relaybtns{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
@@ -122,34 +123,52 @@
     <legend>Parametere</legend>
     <p class="hint">Endringer sendes og lagres når du trykker «Send».</p>
 
-    <div class="row"><label>Fart på (kn)</label><input type="number" id="speedOnKn" step="0.5"></div>
+    <div class="row"><label>Fart på (kn)</label><span class="dotfill"></span><input type="number" id="speedOnKn" step="0.5"></div>
     <p class="hint">Auto kan engasjere når farten kommer over denne.</p>
-    <div class="row"><label>Fart av (kn)</label><input type="number" id="speedOffKn" step="0.5"></div>
-    <p class="hint">Auto kobler ut når farten faller under denne. Gapet opp/av gir hysterese (unngår av/på-flagring).</p>
-    <div class="row"><label>Roll-settpunkt (°)</label><input type="number" id="rollSetpointDeg" step="0.1"></div>
+    <div class="row"><label>Fart av (kn)</label><span class="dotfill"></span><input type="number" id="speedOffKn" step="0.5"></div>
+    <p class="hint">Auto kobler ut når farten faller under denne. Gapet gir hysterese.</p>
+    <div class="row"><label>Roll-settpunkt (°)</label><span class="dotfill"></span><input type="number" id="rollSetpointDeg" step="0.1"></div>
     <p class="hint">Ønsket rollvinkel. 0 = vater. Positiv = aksepter litt styrbord slagside.</p>
-    <div class="row"><label>Dødbånd (°)</label><input type="number" id="rollDeadbandDeg" step="0.1"></div>
+    <div class="row"><label>Monteringsoffset (°)</label><span class="dotfill"></span><input type="number" id="mountingOffsetDeg" step="0.1"></div>
+    <p class="hint">Kompenserer for skjev montering. Legg til målt feil: sensor viser −2° på vater → skriv +2.</p>
+    <div class="row"><label>Dødbånd (°)</label><span class="dotfill"></span><input type="number" id="rollDeadbandDeg" step="0.1"></div>
     <p class="hint">Ingen korrigering så lenge rollen er innenfor ± dette rundt settpunktet. Hindrer jaging.</p>
-    <div class="row"><label>kP</label><input type="number" id="kP" step="0.005"></div>
+    <div class="row"><label>kP</label><span class="dotfill"></span><input type="number" id="kP" step="0.005"></div>
     <p class="hint">Proporsjonalledd: hvor kraftig den svarer på avvik. Høyere = raskere, men kan overskyte.</p>
-    <div class="row"><label>kI</label><input type="number" id="kI" step="0.005"></div>
+    <div class="row"><label>kI</label><span class="dotfill"></span><input type="number" id="kI" step="0.005"></div>
     <p class="hint">Integralledd: fjerner vedvarende slagside over tid. For høy → treg svingning.</p>
-    <div class="row"><label>Fusjon-alpha</label><input type="number" id="fusionAlpha" step="0.005"></div>
-    <p class="hint">Komplementærfilter (0,90–0,999): vekt på gyro vs. akselerometer. Høyere = mer demping av bølgestøt, tregere drift-korreksjon.</p>
-    <div class="row"><label>Pådrag-tau (s)</label><input type="number" id="cmdTauSec" step="0.5"></div>
+    <div class="row"><label>Fusjon-alpha</label><span class="dotfill"></span><input type="number" id="fusionAlpha" step="0.005"></div>
+    <p class="hint">Komplementærfilter (0,90–0,999): vekt på gyro vs. akselerometer.</p>
+    <div class="row"><label>Pådrag-tau (s)</label><span class="dotfill"></span><input type="number" id="cmdTauSec" step="0.5"></div>
     <p class="hint">Lavpass på pådraget. Høyere = roligere plan, lar bølger passere uten å jage dem.</p>
-    <div class="row"><label>Full slaglengde (ms)</label><input type="number" id="fullStrokeMs" step="100"></div>
-    <p class="hint">Tid planet bruker fra helt opp til helt ned. Måles på aktuatoren — brukes til posisjonsestimat uten føler.</p>
-    <div class="row"><label>Maks deploy (0–1)</label><input type="number" id="maxDeployFrac" step="0.05"></div>
-    <p class="hint">Hvor langt ned et plan får kjøres (andel av slaglengde). 0,8 = maks 80 %.</p>
-    <div class="row"><label>Nøytral deploy (0–1)</label><input type="number" id="neutralFrac" step="0.05"></div>
-    <p class="hint">Hvileposisjon i STANDBY. 0 = helt opp. Litt > 0 = «litt over plan».</p>
-    <div class="row"><label>rollSign / gyroSign</label><span class="muted" id="signs">–</span></div>
+    <div class="row"><label>Full slaglengde (ms)</label><span class="dotfill"></span><input type="number" id="fullStrokeMs" step="100"></div>
+    <p class="hint">Tid planet bruker fra helt opp til helt ned — brukes til posisjonsestimat.</p>
+    <div class="row"><label>Maks deploy (0–1)</label><span class="dotfill"></span><input type="number" id="maxDeployFrac" step="0.05"></div>
+    <p class="hint">Hvor langt ned et plan får kjøres. 0,8 = maks 80 %.</p>
+    <div class="row"><label>Nøytral deploy (0–1)</label><span class="dotfill"></span><input type="number" id="neutralFrac" step="0.05"></div>
+    <p class="hint">Hvileposisjon i STANDBY. 0 = helt opp.</p>
+    <div class="row"><label>rollSign / gyroSign</label><span class="dotfill"></span><span class="muted" id="signs">–</span></div>
     <p class="hint">Fortegn-kalibrering (verifisert −1 / +1). Endres normalt ikke.</p>
 
     <div class="bar"><button id="btnSendParams" disabled>Send parametere</button>
       <button class="sec" id="btnReload" disabled>Les på nytt</button></div>
+    <p class="hint">Send lagrer permanent i MCU (NVS). Les på nytt henter gjeldende MCU-verdier tilbake — nyttig for å forkaste usendede UI-endringer.</p>
   </fieldset>
+
+  <!-- FABRIKKVERDIER -->
+  <details>
+    <summary>Gjenopprett anbefalte verdier</summary>
+    <p class="hint">Velg et forhåndsinnstilt sett og trykk «Last inn» — verdiene fylles inn i feltene. Ingenting sendes til MCU før du trykker «Send parametere».</p>
+    <div class="bar" style="gap:8px;flex-wrap:wrap">
+      <select id="presetSelect" style="flex:1;min-width:0;background:#0a1120;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:10px;font-size:14px">
+        <option value="default">Fabrikk (forsiktig start)</option>
+        <option value="sporty">Sport (rask respons)</option>
+        <option value="smooth">Glatt (dempa, bølger)</option>
+      </select>
+      <button class="sec" id="btnLoadPreset">Last inn</button>
+    </div>
+    <div class="warnbar" style="margin-top:4px">OBS: verdiene overskrives i feltene, men ingenting skrives til MCU uten «Send parametere».</div>
+  </details>
 
   <!-- AVANSERT -->
   <details>
@@ -177,9 +196,9 @@ let device=null, chParams=null, chTele=null, chCmd=null, params=null;
 let autoActive=false, debugActive=false, connected=false;
 const $ = id => document.getElementById(id);
 const PARAM_FIELDS = [
-  ["speedOnKn",4],["speedOffKn",8],["rollSetpointDeg",12],["rollDeadbandDeg",16],
-  ["kP",20],["kI",24],["fusionAlpha",28],["cmdTauSec",32],["fullStrokeMs",36],
-  ["maxDeployFrac",40],["neutralFrac",44]
+  ["speedOnKn",4],["speedOffKn",8],["rollSetpointDeg",12],["mountingOffsetDeg",52],
+  ["rollDeadbandDeg",16],["kP",20],["kI",24],["fusionAlpha",28],["cmdTauSec",32],
+  ["fullStrokeMs",36],["maxDeployFrac",40],["neutralFrac",44]
 ];
 
 function updateRelayBtns(){
@@ -290,7 +309,7 @@ async function loadParams(){
 }
 
 function buildParams(){
-  const buf = params ? params.slice(0) : new ArrayBuffer(52);
+  const buf = params ? params.slice(0) : new ArrayBuffer(56);
   const dv = new DataView(buf);
   dv.setUint16(0,0xA770,true); dv.setUint8(2,1);
   dv.setUint8(3,  autoActive  ? 1:0);
@@ -316,6 +335,31 @@ async function sendCmd(code){
     toast("Sendt: "+(CMD_NAMES[code]||code)+" ✓","ok");
   }catch(err){ toast("Kommando feilet: "+err,"err"); }
 }
+
+const PRESETS = {
+  default: {
+    speedOnKn:4.0, speedOffKn:3.0, rollSetpointDeg:0.0, mountingOffsetDeg:0.0,
+    rollDeadbandDeg:1.5, kP:0.05, kI:0.005, fusionAlpha:0.98,
+    cmdTauSec:3.0, fullStrokeMs:6000, maxDeployFrac:0.8, neutralFrac:0.05
+  },
+  sporty: {
+    speedOnKn:3.0, speedOffKn:2.5, rollSetpointDeg:0.0, mountingOffsetDeg:0.0,
+    rollDeadbandDeg:0.8, kP:0.10, kI:0.010, fusionAlpha:0.96,
+    cmdTauSec:1.5, fullStrokeMs:6000, maxDeployFrac:0.9, neutralFrac:0.05
+  },
+  smooth: {
+    speedOnKn:4.0, speedOffKn:3.0, rollSetpointDeg:0.0, mountingOffsetDeg:0.0,
+    rollDeadbandDeg:2.5, kP:0.03, kI:0.002, fusionAlpha:0.995,
+    cmdTauSec:6.0, fullStrokeMs:6000, maxDeployFrac:0.7, neutralFrac:0.1
+  }
+};
+
+$("btnLoadPreset").onclick = ()=>{
+  const p = PRESETS[$("presetSelect").value];
+  if(!p) return;
+  Object.entries(p).forEach(([id,val])=>{ const el=$(id); if(el) el.value=val; });
+  toast("Verdier lastet inn — husk å sende ✓");
+};
 
 $("btnConnect").onclick = connect;
 $("btnDisconnect").onclick = disconnect;
