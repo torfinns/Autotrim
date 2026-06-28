@@ -32,7 +32,7 @@ Begge gjelder: «Panel-side» er fargene i `Autotrim_kobling_og_IO.md` og releko
 - Regulatoren evaluerer feilen én gang per syklus (etter at relé er ferdig + 1,5 s settle-tid)
 - Innenfor dødbåndet: ingen handling — plan holdes i nåværende posisjon
 - Utenfor dødbåndet: `_trimFrac += kP × feil × 0,5 s` → beregner ny planposisjon → kjører relé
-- Anti-windup: ved retningsskifte nullstilles `_trimFrac` slik at korreksjonen starter fra nøytral
+- Ingen anti-windup: position-deadbåndet (120 ms) absorberer støy på deadband-grensen — anti-windup forårsaket uønsket retraktering ved minimale retningsskifter
 - Sekvensering: motparten trekkes alltid opp til < 10 % av slaglengde før den aktive siden kjøres ned
 - Minimum pådragstid: 500 ms (hold-timer per retning)
 
@@ -46,7 +46,7 @@ Begge gjelder: «Panel-side» er fargene i `Autotrim_kobling_og_IO.md` og releko
 
 **Parametere i struct men ikke i bruk (GUI skjult):** `kI`, `cmdTauSec`, `gyroSign`
 
-## Verifisert på benk (2026-06-27)
+## Verifisert på benk (2026-06-28)
 
 - GPS: 38400 baud (ikke u-blox-default 115200)
 - IMU-fortegn: `rollSign = +1` (verifiser at styrbord lav → positiv roll på skjermen)
