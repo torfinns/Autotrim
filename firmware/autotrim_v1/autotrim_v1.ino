@@ -436,11 +436,10 @@ public:
         // Nullstill settle-timer så neste feil responderes umiddelbart.
         if (eMag == 0) { _settleMs = 0; break; }
 
-        // Anti-windup: ved retningsskifte starter vi fra nøytral — ingen "motbakke".
-        if (eMag * _trimFrac < -1e-6f) _trimFrac = 0;
-
         // Diskret integrasjon: én beslutning per SETTLE-syklus.
         // Inne i dødbånd: eMag=0 → ingen endring → plan holder posisjon.
+        // NB: ingen anti-windup — position-deadbåndet absorberer mikroskopiske
+        // retningsskifter slik at vi ikke kjører planet opp ved støy på deadband-kanten.
         _trimFrac += p.kP * eMag * CTRL_STEP_DT;
         _trimFrac  = constrain(_trimFrac, -p.maxDeployFrac, p.maxDeployFrac);
 

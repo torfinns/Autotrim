@@ -85,12 +85,12 @@
       <div class="lbl">Plan-posisjon (estimat)</div>
       <div class="pos-wrap">
         <div class="pos-col">
-          <div class="muted" style="font-size:11px">Venstre</div>
+          <div class="muted" style="font-size:11px">Babord</div>
           <div class="pos-v"><div id="posL"></div></div>
           <div class="muted" id="posLtxt" style="font-size:11px">0%</div>
         </div>
         <div class="pos-col">
-          <div class="muted" style="font-size:11px">Høyre</div>
+          <div class="muted" style="font-size:11px">Styrbord</div>
           <div class="pos-v"><div id="posR"></div></div>
           <div class="muted" id="posRtxt" style="font-size:11px">0%</div>
         </div>
@@ -107,10 +107,10 @@
     </div>
     <p class="hint">Autotrim engasjerer ved fart > «Fart på» og GPS-fix. Debug kobler ut disse kravene for benk-test — slås alltid av ved omstart.</p>
     <div class="relaybtns" style="margin-top:10px">
-      <button id="btnLU" class="sec relay-btn" data-cmd="10" disabled>⬆ LEFT UP</button>
-      <button id="btnRU" class="sec relay-btn" data-cmd="12" disabled>⬆ RIGHT UP</button>
-      <button id="btnLD" class="sec relay-btn" data-cmd="11" disabled>⬇ LEFT DOWN</button>
-      <button id="btnRD" class="sec relay-btn" data-cmd="13" disabled>⬇ RIGHT DOWN</button>
+      <button id="btnLU" class="sec relay-btn" data-cmd="10" disabled>⬆ BB OPP</button>
+      <button id="btnRU" class="sec relay-btn" data-cmd="12" disabled>⬆ SB OPP</button>
+      <button id="btnLD" class="sec relay-btn" data-cmd="11" disabled>⬇ BB NED</button>
+      <button id="btnRD" class="sec relay-btn" data-cmd="13" disabled>⬇ SB NED</button>
     </div>
     <p id="relayHint" class="hint" style="margin-top:6px">Relé-knappene aktiveres når Debug er på. Lyser grønt ved aktivt relé — også fra automatikken.</p>
     <button class="sec big" data-cmd="1" disabled style="margin-top:8px">⬆ NEUTRAL / HOME</button>
@@ -178,7 +178,7 @@
     <p class="hint">Re-kalibrer kjører begge plan opp forbi full slaglengde og nullstiller posisjonsestimatet. Nullstill roll setter gjeldende vinkel som 0 (båten i ro og vater).</p>
   </details>
 
-  <div class="muted">UUID-tjeneste 9a8b0001-… · struct v2 · GUI b20260627</div>
+  <div class="muted">UUID-tjeneste 9a8b0001-… · struct v2 · GUI b20260628</div>
   <div id="toast"></div>
 
 <script>
