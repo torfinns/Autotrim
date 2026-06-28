@@ -110,4 +110,12 @@ App skriver hele structen (inkl. `magic=0xA770`, `version=1`).
 
 ## Sikkerhet — før første sjøtest
 
-- Verifiser relémodu
+- Verifiser relémodulens trigger-polaritet (`RELAY_ACTIVE_HIGH` i `config.h`) og at kontakten er **åpen gjennom hele boot** før Lenco kobles til.
+- Manuell betjening skal alltid virke (parallellkobling). Test på land først.
+- Sikring 2–3 A på 12 V inn.
+
+## TODO / videre
+
+- Hardware-watchdog (`esp_task_wdt`) som tvinger sikker tilstand ved heng.
+- Evt. felles «arm»-MOSFET på relé-VCC.
+- Android-app mot BLE-layouten over.

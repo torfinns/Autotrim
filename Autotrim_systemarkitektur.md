@@ -193,4 +193,29 @@ ESP32 eksponerer en GATT-tjeneste for **Android-app (BLE)**. Foreløpig paramete
 ## 10. Sikkerhet og failsafe
 
 - **Manuell overstyring** er alltid tilgjengelig (parallellkobling) — autotrim kan aldri «låse ute» føreren.
-- **Failsafe ved feil:** mister ESP strøm / henger watchdog → reléene faller til hvile (ingen kommando) → planene **holder** sin posisjon (de jager ikke), og fører kan korrigere manuelt. Merk: Lenco trekker planene helt opp først når den orange retract-/hovedstrømmen fjernes (nøkkel av) — *ikke* automatisk ved ESP-feil. Vurder å la autotrim kunne kommandere «begge opp» som
+- **Failsafe ved feil:** mister ESP strøm / henger watchdog → reléene faller til hvile (ingen kommando) → planene **holder** sin posisjon (de jager ikke), og fører kan korrigere manuelt. Merk: Lenco trekker planene helt opp først når den orange retract-/hovedstrømmen fjernes (nøkkel av) — *ikke* automatisk ved ESP-feil. Vurder å la autotrim kunne kommandere «begge opp» som aktiv sikker tilstand før den går til STANDBY.
+- **Watchdog** på ESP32 som faller til STANDBY ved feil i sensor/GPS/loop.
+- **GPS-tap eller urimelig IMU-data** → STANDBY.
+- **Interlock i fastvare** mot motstridende relékommandoer.
+- **Maks deployerings-/kjøretid** per kommando som hard grense, så et hengende relé ikke kjører et plan til endestopp i det uendelige.
+
+---
+
+## 11. Punkter å verifisere før bygging
+
+1. **Relé-styreinngang vs. 3,3 V:** bekreft at relémodulene trigges sikkert fra ESP32 GPIO (3,3 V). Hvis de krever 5 V-nivå, bruk en enkel nivåtilpasning / transistor / ULN2003.
+2. **Lenco-signalstrøm:** mål strømmen som flyter når en knapp/relé slutter 12 V til funksjonslinjen, for å bekrefte god margin mot reed-kontaktens grense (~0,5 A bryte).
+3. **Roll-fortegn og «aktivt plan»-konvensjon:** bekreftes ved sjøprøve (lutning ↔ hvilket plan retter den opp). Gjøres konfigurerbart i app.
+4. **Aktuator-kjøretid (full slaglengde):** mål tid opp/ned for posisjonsestimering uten posisjonssensor.
+5. **Fartsgrense og hysterese:** finn fornuftige verdier for den aktuelle båten (når den planer).
+6. **Felles jord/referanse:** ESP/relé-jord vs. Lenco/båtens 12V-jord må være samme referanse.
+
+---
+
+## 12. Neste steg
+
+- **Kobling & IO:** detaljert pinplan ESP32, koblingsskjema relémodul ↔ Lenco, strøm/jord-fordeling.
+- **Kontrolllogikk & kode:** fastvare-struktur (loop, fusjon, state machine, regulator, BLE).
+- **App:** GATT-design og plattformvalg (Android/iOS/web-BLE).
+
+*Kilder for komponent-/Lenco-research er listet i chatten.*

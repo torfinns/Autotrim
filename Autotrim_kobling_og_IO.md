@@ -159,4 +159,5 @@ Felles GND ─ ESP32 GND, relé GND ×4, BNO055 GND, GPS GND, DC-DC IN−/OUT−
 ## 8. Åpne valg å bekrefte
 
 - Relémodulenes faktiske trigger-polaritet (avgjør pull-down/-up, §5).
-- Om DevKit er 30
+- Om DevKit er 30- eller 38-pin (samme pinnenavn gjelder, kun fysisk plassering endres).
+- Eventuell felles **«arm»-bryter/MOSFET** på relé-VCC som ekstra sikkerhet.

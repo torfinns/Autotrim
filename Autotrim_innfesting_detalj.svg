@@ -1,0 +1,122 @@
+<svg viewBox="0 0 1120 860" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .title{font-size:26px;font-weight:700;fill:#1b2a44}
+    .sub{font-size:13px;fill:#516079}
+    .mod{font-size:14px;font-weight:700;fill:#1b2a44}
+    .dim{font-size:12px;fill:#c0392b;font-weight:700}
+    .clr{font-size:12px;fill:#0e6e5d;font-weight:700}
+    .note{font-size:11px;fill:#516079}
+    .comp{fill:#dde7f3;stroke:#2b3a55;stroke-width:1.5}
+    .hot{fill:#fde2dd;stroke:#c0392b;stroke-width:1.5}
+    .imu{fill:#ffe9c9;stroke:#b9770e;stroke-width:2}
+    .encl{fill:#f7faff;stroke:#1b2a44;stroke-width:2.5}
+    .lid{fill:#eafaf4;stroke:#16a085;stroke-width:2}
+    .sled{fill:#efe7d8;stroke:#8a6d3b;stroke-width:1.5}
+    .insert{fill:#b9770e;stroke:#7a4d06;stroke-width:1}
+    .standoff{fill:#cfd8e6;stroke:#2b3a55;stroke-width:1}
+    .lead{stroke:#8a96ab;stroke-width:1}
+    .coat{fill:none;stroke:#8e44ad;stroke-width:1.4;stroke-dasharray:3 3}
+  </style>
+
+  <text x="40" y="40" class="title">Autotrim — mekanisk innfesting (snitt)</text>
+  <text x="40" y="60" class="sub">Tverrsnitt hovedboks, sett fra hekk mot baug. Viser HVORDAN kortene holdes fast. Plassering/mål: se Autotrim_layout_dimensjoner.svg.</text>
+  <text x="40" y="78" class="sub">Prinsipp: alt skrus i en printet bunn-«sled» med heat-set innsatser. IMU på egen stiv brakett, rettet etter båtaksene. Conformal coating + IP65.</text>
+
+  <!-- ============ ENCLOSURE CROSS SECTION ============ -->
+  <!-- box outer -->
+  <rect x="120" y="150" width="640" height="380" class="encl" rx="8"/>
+  <!-- lid -->
+  <rect x="108" y="120" width="664" height="34" class="lid" rx="6"/>
+  <text x="440" y="142" text-anchor="middle" class="mod" fill="#0e6e5d">Lokk (IP65, pakning) — GPS-patch på utsiden, opp mot himmel</text>
+  <!-- GPS on lid -->
+  <rect x="360" y="96" width="80" height="22" class="lid" rx="3"/>
+  <text x="400" y="111" text-anchor="middle" class="note" fill="#0e6e5d">GPS M10N (patch opp ↑)</text>
+
+  <!-- printed sled bonded to floor -->
+  <rect x="140" y="500" width="600" height="24" class="sled" rx="3"/>
+  <text x="440" y="517" text-anchor="middle" class="note" fill="#8a6d3b">Printet bunnplate / «sled» (PETG/ASA) — skrudd eller VHB-festet til boksbunn</text>
+
+  <!-- heat-set inserts in sled -->
+  <g class="insert">
+    <rect x="190" y="494" width="8" height="10"/>
+    <rect x="318" y="494" width="8" height="10"/>
+    <rect x="470" y="494" width="8" height="10"/>
+    <rect x="600" y="494" width="8" height="10"/>
+    <rect x="666" y="494" width="8" height="10"/>
+  </g>
+
+  <!-- ESP32 breakout on standoffs (left) -->
+  <rect x="186" y="478" width="16" height="22" class="standoff"/>
+  <rect x="314" y="478" width="16" height="22" class="standoff"/>
+  <rect x="170" y="458" width="176" height="20" class="comp" rx="3"/>
+  <text x="258" y="472" text-anchor="middle" class="mod">ESP32 + breakout</text>
+  <!-- ESP/USB height block on top -->
+  <rect x="240" y="430" width="40" height="28" class="comp" rx="2"/>
+  <text x="260" y="448" text-anchor="middle" class="note">ESP-modul</text>
+
+  <!-- standoff label -->
+  <text x="150" y="492" class="note" text-anchor="end">M3 standoff</text>
+  <line x1="152" y1="489" x2="186" y2="489" class="lead"/>
+
+  <!-- DC-DC on standoffs (right, heat corner up) -->
+  <rect x="596" y="478" width="14" height="22" class="standoff"/>
+  <rect x="662" y="478" width="14" height="22" class="standoff"/>
+  <rect x="585" y="456" width="100" height="22" class="hot" rx="3"/>
+  <text x="635" y="471" text-anchor="middle" class="note" fill="#c0392b">DC-DC (varme)</text>
+
+  <!-- rigid IMU bracket (center-right) -->
+  <rect x="464" y="470" width="20" height="34" class="standoff"/>
+  <rect x="430" y="360" width="14" height="120" class="imu"/>
+  <rect x="416" y="358" width="40" height="14" class="imu" rx="2"/>
+  <text x="436" y="350" text-anchor="middle" class="note" fill="#7a4d06">BNO055</text>
+  <!-- bracket base bolted to sled with insert -->
+  <rect x="424" y="480" width="26" height="20" class="standoff"/>
+  <text x="392" y="430" class="note" fill="#7a4d06" text-anchor="end">Stiv L-brakett,</text>
+  <text x="392" y="444" class="note" fill="#7a4d06" text-anchor="end">boltet rett i sled</text>
+  <line x1="394" y1="438" x2="424" y2="460" class="lead"/>
+  <!-- X up arrow -->
+  <line x1="500" y1="400" x2="500" y2="360" stroke="#8e44ad" stroke-width="2"/>
+  <polygon points="500,352 495,364 505,364" fill="#8e44ad"/>
+  <text x="508" y="372" class="note" fill="#8e44ad">X (opp) — rettet etter båtaksene</text>
+
+  <!-- conformal coating outline over boards -->
+  <path d="M168 428 L348 428 L348 458 L168 458 Z" class="coat"/>
+  <text x="170" y="424" class="note" fill="#8e44ad">conformal coating (alle kort)</text>
+
+  <!-- cable gland on left wall with strain relief -->
+  <rect x="104" y="300" width="20" height="26" class="standoff"/>
+  <circle cx="100" cy="313" r="6" fill="#2b3a55"/>
+  <text x="92" y="296" class="note" text-anchor="end">Kabel-</text>
+  <text x="92" y="309" class="note" text-anchor="end">gland</text>
+  <path d="M124 313 q40 0 60 40 q20 40 70 60" fill="none" stroke="#8a96ab" stroke-width="2"/>
+  <text x="220" y="392" class="note">strekkavlastning innvendig (kabelklemme i sled)</text>
+
+  <!-- Gore vent on right wall -->
+  <circle cx="780" cy="320" r="9" fill="#eafaf4" stroke="#16a085" stroke-width="2"/>
+  <text x="796" y="316" class="note" fill="#0e6e5d">Trykkutlignings-</text>
+  <text x="796" y="329" class="note" fill="#0e6e5d">ventil (Gore-membran)</text>
+  <text x="796" y="342" class="note" fill="#0e6e5d">— hindrer kondens</text>
+
+  <!-- interior height dim -->
+  <line x1="92" y1="154" x2="92" y2="524" class="lead" stroke="#c0392b"/>
+  <line x1="87" y1="154" x2="97" y2="154" stroke="#c0392b" stroke-width="1"/>
+  <line x1="87" y1="524" x2="97" y2="524" stroke="#c0392b" stroke-width="1"/>
+  <text x="78" y="340" class="dim" transform="rotate(90 78 340)" text-anchor="middle">innvendig høyde ≥ 50–60 mm</text>
+
+  <!-- ============ LEGEND / METHOD CHECKLIST ============ -->
+  <rect x="60" y="560" width="1000" height="282" rx="8" fill="#eef2f8" stroke="#aab6cc" stroke-width="1.5"/>
+  <text x="80" y="588" class="mod">Innfestingsmetode — anbefalt «stack» (prototype, marint)</text>
+
+  <text x="80" y="614" class="note"><tspan font-weight="700">1. Bunn-sled (PETG/ASA, ikke PLA):</tspan> én printet plate med søyler/hull tilpasset hvert kort. Festes til boksbunn med skrue eller VHB.</text>
+  <text x="80" y="634" class="note"><tspan font-weight="700">2. Heat-set M3 messinginnsatser:</tspan> smeltes inn i sleden → mye sterkere skruefeste enn skrue rett i plast; tåler vibrasjon og re-montering.</text>
+  <text x="80" y="654" class="note"><tspan font-weight="700">3. M3 standoffs + nylock/Loctite 243:</tspan> løfter kortene fra bunn (luft, isolasjon). Gjengelås på ALT — båt = konstant vibrasjon.</text>
+  <text x="80" y="674" class="note"><tspan font-weight="700">4. IMU på egen stiv L-brakett:</tspan> boltet rett i sled, ALDRI skum/mykt. Loddrett, X opp, rettet etter båtaksene (fortegn avhenger av dette).</text>
+  <text x="80" y="694" class="note"><tspan font-weight="700">5. Pluggbare terminaler/JST med lås:</tspan> mellom kort og bokser, så relékort kan tas ut for service. Ingen hengende loddeskjøt.</text>
+  <text x="80" y="714" class="note"><tspan font-weight="700">6. Conformal coating:</tspan> akryl/silikon-spray på alle kort (masker kontakter). Største enkelttiltak mot saltfukt/kondens.</text>
+  <text x="80" y="734" class="note"><tspan font-weight="700">7. IP65-boks + gland + Gore-ventil:</tspan> kabler gjennom pakkede gland med innvendig strekkavlastning; ventil mot kondens.</text>
+  <text x="80" y="754" class="note"><tspan font-weight="700">8. Tinnbelagt ledning + dielektrisk fett</tspan> på terminaler. Sikring 2–3 A på 12V inn.</text>
+
+  <text x="80" y="784" class="note" fill="#c0392b" font-weight="700">Relékort: egen boks (magnetfelt fra reléer unna IMU). Samme innfestingsprinsipp — DIN-skinne eller standoffs + skruterminaler.</text>
+  <text x="80" y="806" class="note" fill="#7a4d06" font-weight="700">Sikkerhet: ingen innfesting må kunne kortslutte/klemme ledere ved vibrasjon. Manuell betjening og failsafe skal virke uansett mekanisk feil.</text>
+  <text x="80" y="826" class="note" fill="#516079">Fargekode: blå = elektronikk · rosa = varme (DC-DC) · oransje = IMU (kritisk) · beige = printet sled · lilla stiplet = conformal coating · grønn = lokk/ventil.</text>
+</svg>
