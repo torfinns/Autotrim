@@ -12,6 +12,20 @@ DIY automatisk trimplan-styring for båt. En ESP32 retter opp sideveis slagside 
 | `app/autotrim_control.html` | Web Bluetooth-dashbord (Chrome på Android/PC) |
 | `*.svg` | Koblingsskjema, relekort-detalj, layout |
 
+## Lederfarger — Lenco-kontrollboks (30077-001)
+
+To kabelsegmenter med ulik farge på samme signal:
+
+| Funksjon | Panel-side | Skjøtekabel (båt → boks) |
+|---|---|---|
+| 12 V | svart | grå |
+| LU (venstre opp) | hvit | hvit |
+| LD (venstre ned) | rød | rød |
+| RU (høyre opp) | brun | orange |
+| RD (høyre ned) | grønn | grønn |
+
+Begge gjelder: «Panel-side» er fargene i `Autotrim_kobling_og_IO.md` og relekort-SVG-en; «Skjøtekabel» er den faktiske kabelen fra båten inn til kontrollboksen. Kun **RU** (brun ↔ orange) og **12 V** (svart ↔ grå) skifter farge mellom segmentene.
+
 ## Kontrollarkitektur
 
 **Diskret integrasjon med pulse-og-vent:**
@@ -50,47 +64,8 @@ NimBLE-Arduino < 2.3.8 krasjer med `assert(mu->handle)` i `npl_os_freertos.c` p�
 
 Installer i Arduino IDE: kopier `firmware/test/libraries/NimBLE-Arduino/` til `Documents/Arduino/libraries/NimBLE-Arduino/`. Pass på at `exp_nimble_mem.c` i `src/nimble/esp_port/port/src/` er tom (den er en duplikat av `esp_nimble_mem.c` og gir linkerfeil).
 
-Fastvaren har også innebygget NVS-recovery: oppdager krasj ved omstart (`ESP_RST_PANIC`), sletter NVS og starter om — selvhelende ved stale BLE-flash-data.
+### BLE-robusthet (hardning)
 
-## Flash / opplasting
+For å unngå at BLE «henger seg» og ikke kommer i gang igjen uten reflash:
 
-```powershell
-# Finn arduino-cli (følger med Arduino IDE 2.x)
-$cli = "C:\Program Files\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe"
-
-# Kompiler
-& $cli compile --fqbn esp32:esp32:esp32 firmware\autotrim_v1
-
-# Flash (lukk Serial Monitor først — COM10 blir opptatt)
-& $cli upload --fqbn esp32:esp32:esp32 --port COM10 firmware\autotrim_v1
-
-# Ved hardnakket NVS-krasj: erase flash først
-& "C:\Users\torfi\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\5.3.0\esptool.exe" --chip esp32 --port COM10 erase-flash
-```
-
-## Dashbord (GitHub Pages)
-
-`app/autotrim_control.html` hostes på GitHub Pages (krever HTTPS for Web Bluetooth på mobil). Åpnes i Chrome, kobler til BLE-enheten «Autotrim».
-
-**Knapper og funksjoner:**
-- **Autotrim: PÅ/AV** — toggle for autoEnabled (grønn = aktiv)
-- **Debug: PÅ/AV** — kobler ut farts- og GPS-krav for benk-test (oransje = aktiv); slås alltid av ved omstart
-- **LEFT/RIGHT UP/DOWN** — manuell relé-puls (≈1,5 s); aktiveres kun når Debug er på; lyser grønt ved aktivt relé
-- **NEUTRAL / HOME** — kjører begge plan opp
-- **Gjenopprett anbefalte verdier** — tre preset-sett (Fabrikk/Sport/Glatt); laster inn i feltene uten å sende
-
-## AutotrimParams struct (56 bytes, PARAMS_VERSION=2)
-
-| Offset | Felt | Type | Merknad |
-|---|---|---|---|
-| 0 | magic | uint16 | 0xA770 |
-| 2 | version | uint8 | **= 2** — firmware avviser stille ved mismatch |
-| 3 | autoEnabled | uint8 | |
-| 4–44 | speedOnKn … neutralFrac | float×11 | |
-| 48 | rollSign | int8 | brukes for begge akser (accel + gyro) |
-| 49 | gyroSign | int8 | ignoreres i firmware |
-| 50 | testBypass | uint8 | Debug-flagg |
-| 51 | (reserved) | uint8 | |
-| 52 | mountingOffsetDeg | float | Kompenserer for skjev sensormontering |
-
-> **OBS:** Når struct utvides og PARAMS_VERSION bumpes i firmware, må `dv.setUint8(2, <ny versjon>)` i GUI `buildParams()` oppdateres tilsvarende.
+- **Ingen bonding:** `setSecurityAuth(false,false,false)` + `deleteAllBonds()` ved hver init. Åpen konfig-link trenger ikke paring, og dette fjerner hele klassen av feil der stale/korrupt bonding-data i NVS hindrer BLE i å starte

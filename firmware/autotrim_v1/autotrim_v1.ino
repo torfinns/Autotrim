@@ -65,7 +65,7 @@ static const uint32_t CTRL_PERIOD_MS = 50;    // 20 Hz kontroll/relé
 static const uint32_t TELE_PERIOD_MS = 200;   // 5 Hz BLE-telemetri
 
 // Oppstartsrutine
-static const uint32_t STARTUP_UP_MS  = 3000;  // kjør begge opp ved boot
+static const uint32_t STARTUP_UP_MS  = 1000;  // kort homing ved boot (begge opp)
 
 // BLE UUID-er (egendefinerte 128-bit; app må bruke de samme)
 #define BLE_DEVICE_NAME      "Autotrim"
@@ -161,7 +161,7 @@ void params_setDefaults(AutotrimParams &p) {
   p.kI              = 0.01f;
   p.fusionAlpha     = 0.98f;
   p.cmdTauSec       = 5.0f;
-  p.fullStrokeMs    = 6000.0f;
+  p.fullStrokeMs    = 5000.0f;     // målt maks slaglengde ~5 s
   p.maxDeployFrac   = 0.8f;
   p.neutralFrac     = 0.0f;
   p.rollSign        = -1;           // benk-test 2026-06-24: styrbord-lav -> positiv roll
@@ -205,12 +205,20 @@ public:
       digitalWrite(PIN_BNO_RST, HIGH); delay(30);
     }
     Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
-    Wire.setClock(400000);
-    if (!g_bno.begin(OPERATION_MODE_ACCGYRO)) { _ok = false; return false; }
-    delay(20);
-    g_bno.setExtCrystalUse(true);
-    _ok = true; _init = false;
-    return true;
+    Wire.setClock(100000);   // 100 kHz — tryggere over lange ledninger
+    delay(150);              // gi BNO055 tid til POR
+    for (int attempt = 0; attempt < 3; attempt++) {
+      if (g_bno.begin(OPERATION_MODE_ACCGYRO)) {
+        delay(20);
+        g_bno.setExtCrystalUse(true);
+        _ok = true; _init = false;
+        return true;
+      }
+      Serial.printf("IMU init forsøk %d feilet, prøver igjen...\n", attempt + 1);
+      delay(200);
+    }
+    _ok = false;
+    return false;
   }
 
   void update(float dt, const AutotrimParams &p) {
@@ -222,7 +230,9 @@ public:
     _sane = (amag > 4.0f && amag < 25.0f) && !isnan(amag);
 
     float rollAcc = atan2f(_aY, _aX) * 57.2957795f * (float)p.rollSign;
-    _rate = g.z() * (float)p.rollSign;
+    // Geometri: d(atan2(aY,aX))/dt = -wz. Gyroen må derfor inn med MOTSATT fortegn
+    // av rollSign for at komplementærfilteret skal være konsistent (én brukerinnstilling).
+    _rate = -(float)p.rollSign * g.z();
 
     if (!_init) { _roll = rollAcc; _init = true; return; }
     float a_alpha = constrain(p.fusionAlpha, 0.5f, 0.9999f);
@@ -379,9 +389,10 @@ public:
     switch (_state) {
       case State::BOOT_UP: {
         lu = true; ru = true;
-        // Kjør lenge nok til at planene garantert er helt oppe, uansett startposisjon.
-        float bootUpMs = max((float)STARTUP_UP_MS, p.fullStrokeMs * 1.2f);
-        if (_stateTimeMs >= bootUpMs) { _posLeftMs = 0; _posRightMs = 0; setState(State::STANDBY); }
+        // Kort homing (STARTUP_UP_MS = 1 s). NB: garanterer IKKE fullt opp fra vilkårlig
+        // startposisjon — antar planene er nær opp ved boot. Bruk «Begge opp»/re-kal for
+        // full nullstilling (de kjører hele slaglengden).
+        if (_stateTimeMs >= (float)STARTUP_UP_MS) { _posLeftMs = 0; _posRightMs = 0; setState(State::STANDBY); }
         break;
       }
       case State::FAULT:
@@ -564,6 +575,11 @@ public:
     gParams = params;
     NimBLEDevice::init(BLE_DEVICE_NAME);
     NimBLEDevice::setPower(9);   // dBm
+    // INGEN bonding: åpen konfig-link trenger ikke paring. Dette fjerner hele
+    // klassen av feil der stale/korrupt bonding-data i NVS gjør at BLE ikke
+    // kommer i gang igjen uten reflash. Rydd også evt. gamle bindinger ved hver init.
+    NimBLEDevice::setSecurityAuth(false, false, false);
+    NimBLEDevice::deleteAllBonds();
     NimBLEServer *server = NimBLEDevice::createServer();
     server->setCallbacks(&serverCB);
     NimBLEService *svc = server->createService(UUID_SVC);
@@ -592,6 +608,16 @@ public:
   bool consumeParamsDirty() { if (gParamsDirty) { gParamsDirty = false; return true; } return false; }
   Command takeCommand() { uint8_t c = gLastCmd; gLastCmd = CMD_NONE; return (Command)c; }
   bool connected() const { return gConnected; }
+
+  // BLE-watchdog: river ned og bygger opp BLE-stacken på nytt uten å reboote MCU-en.
+  // Gjenoppretter etter "myk" stack-død (loopen lever, men radioen henger).
+  // Kalles kun når frakoblet -> forstyrrer aldri en aktiv justeringsøkt, og
+  // trim-kontrollen påvirkes ikke.
+  void restart() {
+    NimBLEDevice::deinit(true);
+    delay(50);
+    begin(gParams);
+  }
 };
 
 // ============================================================================
@@ -605,6 +631,7 @@ static Control  control;
 static BleIface ble;
 
 static uint32_t tImu = 0, tCtrl = 0, tTele = 0, tDbg = 0;
+static uint32_t tBleWd = 0, lastConnMs = 0;     // BLE-watchdog
 
 static void handleCommands() {
   if (ble.consumeParamsDirty()) params_save(params);
@@ -673,6 +700,7 @@ void setup() {
 
   uint32_t now = millis();
   tImu = tCtrl = tTele = tDbg = now;
+  tBleWd = lastConnMs = now;
 }
 
 void loop() {
@@ -701,8 +729,27 @@ void loop() {
   if (now - tDbg >= 500) {                 // 2 Hz USB-debug
     tDbg = now;
     const char* st[] = {"BOOT_UP","STANDBY","ACTIVE","FAULT"};
-    Serial.printf("roll:%+6.1f rate:%+6.1f | SOG:%4.1f fix:%d sats:%2d | %-7s rel:0x%X\n",
+    Serial.printf("roll:%+6.1f rate:%+6.1f | SOG:%4.1f fix:%d sats:%2d | %-7s rel:0x%X | imu ok=%d sane=%d | heap=%u ble=%s\n",
                   imuDev.rollDeg() + params.mountingOffsetDeg, imuDev.rollRateDps(), gps.sogKn(), gps.hasFix(), gps.sats(),
-                  st[(uint8_t)control.state() & 3], relays.bits());
+                  st[(uint8_t)control.state() & 3], relays.bits(),
+                  (int)imuDev.ok(), (int)imuDev.sane(),
+                  (unsigned)ESP.getFreeHeap(), ble.connected() ? "til" : "fra");
+  }
+
+  // ---- BLE-watchdog (hver 5 s) — gjenoppretter myk stack-død uten MCU-reboot ----
+  if (now - tBleWd >= 5000) {
+    tBleWd = now;
+    if (ble.connected()) {
+      lastConnMs = now;
+    } else {
+      NimBLEDevice::startAdvertising();              // sørg for at vi annonserer
+      // Langvarig frakoblet ELLER lav heap -> full re-init av BLE-stacken.
+      // Skjer kun når ingen er tilkoblet, så en aktiv justeringsøkt avbrytes aldri.
+      if (now - lastConnMs > 90000UL || ESP.getFreeHeap() < 20000U) {
+        Serial.println("BLE-watchdog: re-init av BLE-stacken");
+        ble.restart();
+        lastConnMs = now;                            // ny 90 s-frist før evt. ny re-init
+      }
+    }
   }
 }

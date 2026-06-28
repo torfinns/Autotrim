@@ -1,5 +1,8 @@
 # Autotrim — ESP32 fastvare
 
+> ⚠️ **Gjeldende fastvare er `firmware/autotrim_v1/autotrim_v1.ino`** (alt samlet i én Arduino-sketch). Rot-`README.md` er autoritativ for nåværende struct (v2, 56 byte, `mountingOffsetDeg`), kommandosett, fortegns-/BLE-håndtering og bygg/flash. Dette dokumentet og `firmware/src/`-modulene er **eldre referanse** og kan være utdaterte på detaljer (struct v1, separat `gyroSign`, gammel kommandoliste).
+
+
 Modulær Arduino-fastvare (PlatformIO) for automatisk trim av båt, parallellkoblet Lenco 30077-001.
 Se også `../Autotrim_systemarkitektur.md` og `../Autotrim_kobling_og_IO.md`.
 
@@ -107,12 +110,4 @@ App skriver hele structen (inkl. `magic=0xA770`, `version=1`).
 
 ## Sikkerhet — før første sjøtest
 
-- Verifiser relémodulens trigger-polaritet (`RELAY_ACTIVE_HIGH` i `config.h`) og at kontakten er **åpen gjennom hele boot** før Lenco kobles til.
-- Manuell betjening skal alltid virke (parallellkobling). Test på land først.
-- Sikring 2–3 A på 12 V inn.
-
-## TODO / videre
-
-- Hardware-watchdog (`esp_task_wdt`) som tvinger sikker tilstand ved heng.
-- Evt. felles «arm»-MOSFET på relé-VCC.
-- Android-app mot BLE-layouten over.
+- Verifiser relémodu

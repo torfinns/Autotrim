@@ -58,7 +58,7 @@
 
 - **I2C pull-ups:** 4,7 kΩ fra SDA→3V3 og SCL→3V3. Mange BNO055-breakouts har dette innebygd — sjekk; ikke doble unødvendig.
 - Montering: X opp, Y på tvers (jf. arkitektur §5). Sett akse-remap i fastvare.
-- **Fortegn verifisert (benk-test 2026-06-24):** `rollSign = -1`, `gyroSign = +1`. Med disse gir styrbord-lav **positiv** roll (konvensjonen). 0° = skrifta på BNO055-kortet vannrett. Defaults er satt i `params.cpp`.
+- **Fortegn:** kun **én** brukerinnstilling, `rollSign`. Sett den slik at styrbord-lav gir **positiv** roll på skjermen. Gyroens fortegn styres automatisk i koden: `d(atan2(aY,aX))/dt = −ωz` (geometri), så gyro-leddet får motsatt fortegn av `rollSign` i komplementærfilteret. `gyroSign`-feltet er dermed **ikke i bruk**. 0° = skrifta på BNO055-kortet vannrett.
 
 ### TBS M10N GPS (UART)
 | GPS | Til |
@@ -159,5 +159,4 @@ Felles GND ─ ESP32 GND, relé GND ×4, BNO055 GND, GPS GND, DC-DC IN−/OUT−
 ## 8. Åpne valg å bekrefte
 
 - Relémodulenes faktiske trigger-polaritet (avgjør pull-down/-up, §5).
-- Om DevKit er 30- eller 38-pin (samme pinnenavn gjelder, kun fysisk plassering endres).
-- Eventuell felles **«arm»-bryter/MOSFET** på relé-VCC som ekstra sikkerhet.
+- Om DevKit er 30
