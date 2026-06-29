@@ -343,11 +343,12 @@ private:
 //  CONTROL  (fra control.h/.cpp) — state machine, fartslås, regulator
 // ============================================================================
 static const float POS_DEADBAND_MS      = 120.0f;
+static const float MIN_RELAY_ON_MS      = 100.0f;   // MÅ være < POS_DEADBAND_MS — se SET_RELAY
 static const float SETTLE_AFTER_MOVE_MS = 1500.0f;  // settle for liten feil
 static const float SETTLE_BIG_ERR_MS   =  500.0f;  // settle for stor feil (rask innregulering)
 static const float CTRL_STEP_DT         = 0.50f;    // effektivt integrasjons-dt per beslutning
 static const float BIG_ERR_DEG          = 3.0f;     // feil > dette → aggressiv puls
-static const float MAX_PULSE_MS         = 4000.0f;  // maks enkelt-puls ved stor feil
+static const float MAX_PULSE_MS         = 4000.0f;  // maks enkelt-puls
 
 class Control {
 public:
@@ -448,30 +449,29 @@ public:
         _active = (_trimFrac >  0.02f) ? Side::LEFT
                 : (_trimFrac < -0.02f) ? Side::RIGHT : Side::NONE;
 
-        // Aggressivitet: stor feil (|e| > 3°) → kjør til mål i én lang puls + kort settle.
-        // Liten feil → 500ms minimumspuls + 1,5s settle (rolig innregulering).
+        // Stor feil (|e| > 3°): kortere settle → raskere re-evaluering.
         bool bigErr = (fabsf(e) > BIG_ERR_DEG);
         float effectiveSettle = bigErr ? SETTLE_BIG_ERR_MS : SETTLE_AFTER_MOVE_MS;
 
-        // Hjelpemakro: sett hold-timer direkte ved stor feil (kjør til mål),
-        // ellers bare sett boolean (hold-timer-logikken setter MIN_RELAY_ON_MS).
-        #define SET_RELAY(holdVar, flag, delta) \
-          if (bigErr) holdVar = max(holdVar, min((float)(delta), MAX_PULSE_MS)); \
-          else flag = true;
+        // Proporsjonal hold-timer: pulsvarighet = posisjonsavvik, minimum MIN_RELAY_ON_MS.
+        // MIN_RELAY_ON_MS < POS_DEADBAND_MS garanterer at overshoot absorberes av
+        // position-deadbåndet — ingen videre korreksjon → ingen jaging.
+        #define SET_RELAY(holdVar, delta) \
+          holdVar = max(holdVar, constrain((float)(delta), MIN_RELAY_ON_MS, MAX_PULSE_MS));
 
         // Sekvensering: motpart må være < 10% av fullstroke før aktiv side kjøres ned.
         const float retractThreshMs = p.fullStrokeMs * 0.10f;
         bool needMove = false;
 
         if (tgtLeftMs > POS_DEADBAND_MS && _posRightMs > retractThreshMs) {
-          SET_RELAY(_holdRUms, ru, _posRightMs); needMove = true;
+          SET_RELAY(_holdRUms, _posRightMs); needMove = true;
         } else if (tgtRightMs > POS_DEADBAND_MS && _posLeftMs > retractThreshMs) {
-          SET_RELAY(_holdLUms, lu, _posLeftMs);  needMove = true;
+          SET_RELAY(_holdLUms, _posLeftMs);  needMove = true;
         } else {
-          if      (_posLeftMs  < tgtLeftMs  - POS_DEADBAND_MS) { SET_RELAY(_holdLDms, ld, tgtLeftMs  - _posLeftMs);  needMove = true; }
-          else if (_posLeftMs  > tgtLeftMs  + POS_DEADBAND_MS) { SET_RELAY(_holdLUms, lu, _posLeftMs  - tgtLeftMs);  needMove = true; }
-          if      (_posRightMs < tgtRightMs - POS_DEADBAND_MS) { SET_RELAY(_holdRDms, rd, tgtRightMs - _posRightMs); needMove = true; }
-          else if (_posRightMs > tgtRightMs + POS_DEADBAND_MS) { SET_RELAY(_holdRUms, ru, _posRightMs - tgtRightMs); needMove = true; }
+          if      (_posLeftMs  < tgtLeftMs  - POS_DEADBAND_MS) { SET_RELAY(_holdLDms, tgtLeftMs  - _posLeftMs);  needMove = true; }
+          else if (_posLeftMs  > tgtLeftMs  + POS_DEADBAND_MS) { SET_RELAY(_holdLUms, _posLeftMs  - tgtLeftMs);  needMove = true; }
+          if      (_posRightMs < tgtRightMs - POS_DEADBAND_MS) { SET_RELAY(_holdRDms, tgtRightMs - _posRightMs); needMove = true; }
+          else if (_posRightMs > tgtRightMs + POS_DEADBAND_MS) { SET_RELAY(_holdRUms, _posRightMs - tgtRightMs); needMove = true; }
         }
         #undef SET_RELAY
 
@@ -480,9 +480,7 @@ public:
       }
     }
 
-    // Minimum pådragstid 500 ms — unngår korte jokke-pulser.
     // Retningsskifte nullstiller motstående hold umiddelbart.
-    static const float MIN_RELAY_ON_MS = 500.0f;
     const float hdt = dt * 1000.0f;
     if (lu) _holdLDms = 0; if (ld) _holdLUms = 0;
     if (ru) _holdRDms = 0; if (rd) _holdRUms = 0;
