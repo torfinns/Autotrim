@@ -12,6 +12,17 @@ DIY automatisk trimplan-styring for båt. En ESP32 retter opp sideveis slagside 
 | `autotrim_control.html` | Web Bluetooth-dashbord (Chrome på Android/PC) — hostes på GitHub Pages |
 | `*.svg` | Koblingsskjema, relekort-detalj, layout |
 
+## Pinnekart — reléer
+
+| Signal | GPIO | Merknad |
+|---|---|---|
+| Babord opp (LU) | 25 | verifisert 2026-07-18 |
+| Babord ned (LD) | 33 | |
+| Styrbord opp (RU) | 27 | |
+| Styrbord ned (RD) | 26 | |
+
+> GPIO25/27 trekker plan OPP, GPIO33/26 dypper plan NED — verifisert på benk. Pins ble byttet ift. opprinnelig kobling (33↔25 og 26↔27) fordi OPP-relé fysisk dyppa planet.
+
 ## Lederfarger — Lenco-kontrollboks (30077-001)
 
 To kabelsegmenter med ulik farge på samme signal:
@@ -19,12 +30,12 @@ To kabelsegmenter med ulik farge på samme signal:
 | Funksjon | Panel-side | Skjøtekabel (båt → boks) |
 |---|---|---|
 | 12 V | svart | grå |
-| LU (venstre opp) | hvit | hvit |
-| LD (venstre ned) | rød | rød |
-| RU (høyre opp) | brun | orange |
-| RD (høyre ned) | grønn | grønn |
+| Babord opp (LU) | hvit | hvit |
+| Babord ned (LD) | rød | rød |
+| Styrbord opp (RU) | brun | orange |
+| Styrbord ned (RD) | grønn | grønn |
 
-Begge gjelder: «Panel-side» er fargene i `Autotrim_kobling_og_IO.md` og relekort-SVG-en; «Skjøtekabel» er den faktiske kabelen fra båten inn til kontrollboksen. Kun **RU** (brun ↔ orange) og **12 V** (svart ↔ grå) skifter farge mellom segmentene.
+Kun **RU** (brun ↔ orange) og **12 V** (svart ↔ grå) skifter farge mellom segmentene.
 
 ## Kontrollarkitektur
 
@@ -32,9 +43,9 @@ Begge gjelder: «Panel-side» er fargene i `Autotrim_kobling_og_IO.md` og releko
 - Regulatoren evaluerer feilen én gang per syklus (etter at relé er ferdig + 1,5 s settle-tid)
 - Innenfor dødbåndet: ingen handling — plan holdes i nåværende posisjon
 - Utenfor dødbåndet: `_trimFrac += kP × feil × 0,5 s` → beregner ny planposisjon → kjører relé
-- Ingen anti-windup: position-deadbåndet (120 ms) absorberer støy på deadband-grensen — anti-windup forårsaket uønsket retraktering ved minimale retningsskifter
+- Proporsjonal puls: `constrain(posisjonsavvik, 100 ms, 4000 ms)` — 100 ms < POS_DEADBAND_MS (120 ms) garanterer at overshoot absorberes uten ny korreksjon
+- Ingen anti-windup: position-deadbåndet absorberer støy på deadband-grensen
 - Sekvensering: motparten trekkes alltid opp til < 10 % av slaglengde før den aktive siden kjøres ned
-- Minimum pådragstid: 500 ms (hold-timer per retning)
 
 **Parametere som faktisk brukes:**
 - `kP` (GUI viser ×100): proporsjonalforsterkning — typisk 10–20
@@ -43,16 +54,18 @@ Begge gjelder: «Panel-side» er fargene i `Autotrim_kobling_og_IO.md` og releko
 - `fullStrokeMs`, `maxDeployFrac`, `neutralFrac`: mekaniske grenser
 - `speedOnKn` / `speedOffKn`: fartslås med hysterese
 - `rollSetpointDeg`, `mountingOffsetDeg`, `rollSign`: kalibrering
+- `relayInvert`: 0 = normal, 1 = snu opp/ned i programvare (for omvendt relékobling)
 
 **Parametere i struct men ikke i bruk (GUI skjult):** `kI`, `cmdTauSec`, `gyroSign`
 
-## Verifisert på benk (2026-06-28)
+## Verifisert på benk (2026-07-18)
 
 - GPS: 38400 baud (ikke u-blox-default 115200)
-- IMU-fortegn: `rollSign = +1` (verifiser at styrbord lav → positiv roll på skjermen)
+- IMU-fortegn: `rollSign = +1` (styrbord lav → positiv roll på skjermen)
 - `gyroSign`-feltet ignoreres — `rollSign` brukes for begge akser
-- `PIN_BNO_RST = -1` — RST på BNO055 er ikke koblet til ESP32; -1 hopper over reset-sekvensen (BNO055 bruker intern POR)
+- `PIN_BNO_RST = -1` — RST på BNO055 er ikke koblet til ESP32
 - BLE: NimBLE 2.5.0 (se merknad under)
+- GPIO-pins for OPP/NED byttet ift. opprinnelig kobling
 
 ## Bibliotek (Arduino IDE) for `autotrim_v1`
 
@@ -68,9 +81,9 @@ Installer i Arduino IDE: kopier `firmware/test/libraries/NimBLE-Arduino/` til `D
 
 For å unngå at BLE «henger seg» og ikke kommer i gang igjen uten reflash:
 
-- **Ingen bonding:** `setSecurityAuth(false,false,false)` + `deleteAllBonds()` ved hver init. Åpen konfig-link trenger ikke paring, og dette fjerner hele klassen av feil der stale/korrupt bonding-data i NVS hindrer BLE i å starte etter omstart.
-- **BLE-watchdog:** hvert 5. s; hvis frakoblet i > 90 s eller fri heap < 20 KB, re-initialiseres BLE-stacken (`deinit`+`begin`) uten å reboote MCU-en. Skjer kun når ingen er tilkoblet, så en aktiv justeringsøkt avbrytes aldri og trim-kontrollen påvirkes ikke. USB-debug viser `heap=` og `ble=til/fra` for å følge heap-trend (lekkasje-indikator).
-- **NVS-recovery:** ved krasj-reset (`ESP_RST_PANIC`/WDT) slettes NVS og MCU-en starter om. **OBS:** dette sletter foreløpig *hele* NVS, altså også de innstilte parametrene (faller til default). Bør forbedres til å bevare params (slette kun BLE-namespace).
+- **Ingen bonding:** `setSecurityAuth(false,false,false)` + `deleteAllBonds()` ved hver init.
+- **BLE-watchdog:** hvert 5. s; hvis frakoblet i > 90 s eller fri heap < 20 KB, re-initialiseres BLE-stacken (`deinit`+`begin`) uten å reboote MCU-en.
+- **NVS-recovery:** ved krasj-reset (`ESP_RST_PANIC`/WDT) slettes NVS og MCU-en starter om. **OBS:** sletter hele NVS inkl. lagrede parametere (faller til default).
 
 ## Flash / opplasting
 
@@ -90,14 +103,15 @@ $cli = "C:\Program Files\Arduino IDE\resources\app\lib\backend\resources\arduino
 
 ## Dashbord (GitHub Pages)
 
-`autotrim_control.html` (i repo-rota) hostes på GitHub Pages (krever HTTPS for Web Bluetooth på mobil). Åpnes i Chrome, kobler til BLE-enheten «Autotrim».
+`autotrim_control.html` (i repo-rota) hostes på GitHub Pages (krever HTTPS for Web Bluetooth på mobil). Åpnes i Chrome, kobler til BLE-enheten «Autotrim». GUI b20260718.
 
 **Knapper og funksjoner:**
 - **Autotrim: PÅ/AV** — toggle for autoEnabled (grønn = aktiv)
 - **Debug: PÅ/AV** — kobler ut farts- og GPS-krav for benk-test (oransje = aktiv); slås alltid av ved omstart
-- **LEFT/RIGHT UP/DOWN** — manuell relé-puls (≈1,5 s); aktiveres kun når Debug er på; lyser grønt ved aktivt relé
+- **BB OPP / BB NED / SB OPP / SB NED** — manuell relé-puls; aktiveres kun når Debug er på; lyser grønt ved aktivt relé
 - **NEUTRAL / HOME** — kjører begge plan opp
-- **Gjenopprett anbefalte verdier** — tre preset-sett (Fabrikk/Sport/Glatt); laster inn i feltene uten å sende
+- **Gjenopprett anbefalte verdier** — tre preset-sett (Fabrikk/Sport/Glatt)
+- **Avanserte innstillinger → Snu opp/ned** — aktiverer `relayInvert` for omvendt relékobling
 
 ## AutotrimParams struct (56 bytes, PARAMS_VERSION=2)
 
@@ -110,7 +124,7 @@ $cli = "C:\Program Files\Arduino IDE\resources\app\lib\backend\resources\arduino
 | 48 | rollSign | int8 | brukes for begge akser (accel + gyro) |
 | 49 | gyroSign | int8 | ignoreres i firmware |
 | 50 | testBypass | uint8 | Debug-flagg |
-| 51 | (reserved) | uint8 | |
+| 51 | relayInvert | uint8 | 0=normal, 1=snu opp/ned |
 | 52 | mountingOffsetDeg | float | Kompenserer for skjev sensormontering |
 
 > **OBS:** Når struct utvides og PARAMS_VERSION bumpes i firmware, må `dv.setUint8(2, <ny versjon>)` i GUI `buildParams()` oppdateres tilsvarende.
