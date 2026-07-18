@@ -51,10 +51,12 @@ static const int PIN_GPS_TX  = 17;    // ESP TX2 -> GPS RX
 static const uint32_t GPS_BAUD = 38400;   // verifisert på modulen (ikke 115200)
 
 // Reléer (fortløpende på venstre header, RTC, ingen boot-glitch/strapping)
-static const int PIN_REL_LU = 33;     // venstre opp
-static const int PIN_REL_LD = 25;     // venstre ned
-static const int PIN_REL_RU = 26;     // høyre opp
-static const int PIN_REL_RD = 27;     // høyre ned
+// GPIO25/27 = OPP (trekker plan mot skrog), GPIO33/26 = NED (dypper plan).
+// Verifisert 2026-07-18: GPIO33 dyppa, GPIO25 trakk. Pins byttet ift. opprinnelig kobling.
+static const int PIN_REL_LU = 25;     // babord opp
+static const int PIN_REL_LD = 33;     // babord ned
+static const int PIN_REL_RU = 27;     // styrbord opp
+static const int PIN_REL_RD = 26;     // styrbord ned
 
 // Relémodulens trigger-polaritet. true = aktiv-høy (IN=HIGH -> relé på).
 static const bool RELAY_ACTIVE_HIGH = true;
@@ -140,8 +142,8 @@ struct AutotrimParams {
   float    neutralFrac;
   int8_t   rollSign;
   int8_t   gyroSign;
-  uint8_t  testBypass;   // 0=normal, 1=overstyr fart+GPS-fix (kun benk-test; nullstilles ved boot)
-  uint8_t  reserved1;
+  uint8_t  testBypass;    // 0=normal, 1=overstyr fart+GPS-fix (kun benk-test; nullstilles ved boot)
+  uint8_t  relayInvert;   // 0=normal, 1=snu opp/ned (programvare-swap for omvendt relékobling)
   float    mountingOffsetDeg;   // monteringskorreksjon: legg til målt roll (grader)
 };
 #pragma pack(pop)
@@ -167,7 +169,7 @@ void params_setDefaults(AutotrimParams &p) {
   p.rollSign        = -1;           // benk-test 2026-06-24: styrbord-lav -> positiv roll
   p.gyroSign        = 1;            // verifisert konsistent med rollSign=-1
   p.testBypass         = 0;            // testmodus av
-  p.reserved1          = 0;
+  p.relayInvert        = 0;  // 0=normal (med korrekte pin-definisjoner)
   p.mountingOffsetDeg  = 0.0f;
 }
 
@@ -494,6 +496,8 @@ public:
     if (_holdRDms > 0) { rd = true; _holdRDms -= hdt; }
 
     integratePosition(dt, lu, ld, ru, rd, p);
+    // Programvare-invert: swap opp/ned etter posisjons-tracking men før relé-output.
+    if (p.relayInvert) { bool t; t=lu;lu=ld;ld=t; t=ru;ru=rd;rd=t; }
     _r->apply(lu, ld, ru, rd);
   }
 

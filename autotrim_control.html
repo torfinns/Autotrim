@@ -176,9 +176,13 @@
       <button class="sec" data-cmd="4" disabled>Nullstill roll (i ro)</button>
     </div>
     <p class="hint">Re-kalibrer kjører begge plan opp forbi full slaglengde og nullstiller posisjonsestimatet. Nullstill roll setter gjeldende vinkel som 0 (båten i ro og vater).</p>
+    <div style="margin-top:10px">
+      <button id="btnRelayInvert" class="btn-toggle big" disabled>Snu opp/ned: AV</button>
+    </div>
+    <p class="hint">Snu opp/ned: aktiver hvis OPP-knapper dypper planen og NED-knapper trekker den opp. Skyldes omvendt relékobling. Sendes med «Send parametere».</p>
   </details>
 
-  <div class="muted">UUID-tjeneste 9a8b0001-… · struct v2 · GUI b20260628</div>
+  <div class="muted">UUID-tjeneste 9a8b0001-… · struct v2 · GUI b20260718</div>
   <div id="toast"></div>
 
 <script>
@@ -191,7 +195,7 @@ const CMD_NAMES = {1:"Begge opp",2:"Re-kalibrer",4:"Nullstill roll",
                    10:"LU",11:"LD",12:"RU",13:"RD",14:"Stopp"};
 
 let device=null, chParams=null, chTele=null, chCmd=null, params=null;
-let autoActive=false, debugActive=false, connected=false;
+let autoActive=false, debugActive=false, relayInverted=false, connected=false;
 const $ = id => document.getElementById(id);
 // [id, byteOffset, displayScale]  — displayScale: GUI = raw * scale; raw = GUI / scale
 const PARAM_FIELDS = [
@@ -219,6 +223,12 @@ function updateDebugBtn(){
   updateRelayBtns();
 }
 
+function updateRelayInvertBtn(){
+  const b=$("btnRelayInvert");
+  b.textContent = relayInverted ? "Snu opp/ned: PÅ" : "Snu opp/ned: AV";
+  b.className = "btn-toggle big" + (relayInverted?" active-warn":"");
+}
+
 function setConnected(on){
   connected = on;
   $("status").textContent = on ? "tilkoblet" : "frakoblet";
@@ -229,6 +239,7 @@ function setConnected(on){
   $("btnReload").disabled = !on;
   $("btnAuto").disabled = !on;
   $("btnDebug").disabled = !on;
+  $("btnRelayInvert").disabled = !on;
   document.querySelectorAll("[data-cmd]:not(.relay-btn)").forEach(b=>b.disabled=!on);
   updateRelayBtns();
 }
@@ -299,10 +310,12 @@ function renderTele(dv){
 async function loadParams(){
   const dv = await chParams.readValue();
   params = dv.buffer.slice(0);
-  autoActive  = dv.getUint8(3)===1;
-  debugActive = dv.getUint8(50)===1;
+  autoActive    = dv.getUint8(3)===1;
+  debugActive   = dv.getUint8(50)===1;
+  relayInverted = dv.getUint8(51)===1;
   updateAutoBtn();
   updateDebugBtn();
+  updateRelayInvertBtn();
   PARAM_FIELDS.forEach(([id,off,sc])=> $(id).value = +(dv.getFloat32(off,true)*(sc||1)).toFixed(4));
   $("rollSign").value = dv.getInt8(48);
 }
@@ -311,8 +324,9 @@ function buildParams(){
   const buf = params ? params.slice(0) : new ArrayBuffer(56);
   const dv = new DataView(buf);
   dv.setUint16(0,0xA770,true); dv.setUint8(2,2);
-  dv.setUint8(3,  autoActive  ? 1:0);
-  dv.setUint8(50, debugActive ? 1:0);
+  dv.setUint8(3,  autoActive    ? 1:0);
+  dv.setUint8(50, debugActive   ? 1:0);
+  dv.setUint8(51, relayInverted ? 1:0);
   PARAM_FIELDS.forEach(([id,off,sc])=> dv.setFloat32(off, (parseFloat($(id).value)||0)/(sc||1), true));
   dv.setInt8(48, parseInt($("rollSign").value));
   dv.setInt8(49, parseInt($("rollSign").value));
@@ -368,6 +382,7 @@ $("btnReload").onclick = loadParams;
 $("btnSendParams").onclick = sendParams;
 $("btnAuto").onclick = async ()=>{ autoActive=!autoActive; updateAutoBtn(); await sendParams(); };
 $("btnDebug").onclick = async ()=>{ debugActive=!debugActive; updateDebugBtn(); await sendParams(); };
+$("btnRelayInvert").onclick = async ()=>{ relayInverted=!relayInverted; updateRelayInvertBtn(); await sendParams(); };
 document.querySelectorAll("[data-cmd]").forEach(b=> b.onclick=()=>sendCmd(+b.dataset.cmd));
 
 if(!navigator.bluetooth){
