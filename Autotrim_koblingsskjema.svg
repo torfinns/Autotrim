@@ -16,7 +16,7 @@
   </style>
 
   <text x="40" y="40" class="title">Autotrim — koblingsskjema</text>
-  <text x="40" y="60" class="sub">ESP32 (CP2102) · BNO055 · TBS M10N GPS · 4× reed-relé SIP-1A05 · Lenco 30077-001. Power via net-flagg (+5V / +3V3 / GND = felles stjernejord).</text>
+  <text x="40" y="60" class="sub">ESP32 (CP2102) · BNO055 · TBS M10N GPS · 4× reed-relé SIP-1A03 · Lenco 30077-001. Power via net-flagg (+5V / +3V3 / GND = felles stjernejord).</text>
 
   <!-- POWER -->
   <rect x="40" y="90" width="150" height="56" rx="8" class="box"/>
@@ -62,10 +62,10 @@
     <text x="588" y="343" text-anchor="end" class="pinmono">GPIO22 SCL</text><circle cx="600" cy="339" r="4" class="dot" fill="#2980b9"/>
     <text x="588" y="383" text-anchor="end" class="pinmono">GPIO16 RX2</text><circle cx="600" cy="379" r="4" class="dot" fill="#16a085"/>
     <text x="588" y="408" text-anchor="end" class="pinmono">GPIO17 TX2</text><circle cx="600" cy="404" r="4" class="dot" fill="#16a085"/>
-    <text x="588" y="462" text-anchor="end" class="pinmono">GPIO33 LU</text><circle cx="600" cy="458" r="4" class="dot" fill="#8e44ad"/>
-    <text x="588" y="492" text-anchor="end" class="pinmono">GPIO25 LD</text><circle cx="600" cy="488" r="4" class="dot" fill="#8e44ad"/>
-    <text x="588" y="522" text-anchor="end" class="pinmono">GPIO26 RU</text><circle cx="600" cy="518" r="4" class="dot" fill="#8e44ad"/>
-    <text x="588" y="552" text-anchor="end" class="pinmono">GPIO27 RD</text><circle cx="600" cy="548" r="4" class="dot" fill="#8e44ad"/>
+    <text x="588" y="462" text-anchor="end" class="pinmono">GPIO25 LU</text><circle cx="600" cy="458" r="4" class="dot" fill="#8e44ad"/>
+    <text x="588" y="492" text-anchor="end" class="pinmono">GPIO33 LD</text><circle cx="600" cy="488" r="4" class="dot" fill="#8e44ad"/>
+    <text x="588" y="522" text-anchor="end" class="pinmono">GPIO27 RU</text><circle cx="600" cy="518" r="4" class="dot" fill="#8e44ad"/>
+    <text x="588" y="552" text-anchor="end" class="pinmono">GPIO26 RD</text><circle cx="600" cy="548" r="4" class="dot" fill="#8e44ad"/>
   </g>
 
   <!-- BNO055 -->
@@ -109,7 +109,7 @@
 
   <!-- RELAY BOARD -->
   <rect x="700" y="410" width="320" height="320" rx="8" class="box"/>
-  <text x="860" y="436" text-anchor="middle" class="mod">Relékort (eget) — 4× reed SIP-1A05</text>
+  <text x="860" y="436" text-anchor="middle" class="mod">Relékort (eget) — 4× reed SIP-1A03</text>
   <text x="860" y="453" text-anchor="middle" class="note">skruterminaler til Lenco · spole 5V, kontakt reed (galvanisk skilt)</text>
 
   <!-- relay rows -->
@@ -156,7 +156,7 @@
     <line x1="800" y1="609" x2="838" y2="601" stroke="#2b3a55" stroke-width="2"/>
     <circle cx="844" cy="609" r="3.5" class="dot"/><text x="852" y="613" class="lbl">NO</text>
     <line x1="844" y1="609" x2="1000" y2="609" class="sig" stroke="#8b5a2b"/>
-    <text x="900" y="604" class="lbl">brun (RU)</text>
+    <text x="900" y="604" class="lbl">orange (RU)</text>
 
     <!-- Row4 RD/grønn -->
     <rect x="724" y="656" width="44" height="26" rx="4" fill="#fff" stroke="#2b3a55"/>
@@ -196,9 +196,9 @@
     <circle cx="1040" cy="609" r="4" class="dot" fill="#8b5a2b"/>
     <circle cx="1040" cy="669" r="4" class="dot" fill="#27ae60"/>
   </g>
-  <text x="1052" y="475" class="lbl">svart 12V</text>
+  <text x="1052" y="475" class="lbl">grå 12V</text>
   <text x="1052" y="540" class="lbl">rød (LD)</text>
-  <text x="1052" y="600" class="lbl">brun (RU)</text>
+  <text x="1052" y="600" class="lbl">orange (RU)</text>
   <text x="1052" y="660" class="lbl">grønn (RD)</text>
   <!-- hvit goes to top terminal too; show hvit near svart? put hvit at 489 offset -->
   <text x="1052" y="503" class="lbl">hvit (LU)</text>
@@ -206,7 +206,7 @@
   <line x1="800" y1="700" x2="1020" y2="700" class="sig" stroke="#1b2a44" stroke-width="2.5"/>
   <line x1="1020" y1="700" x2="1020" y2="489" class="sig" stroke="#1b2a44" stroke-width="2.5"/>
   <line x1="1020" y1="489" x2="1040" y2="489" class="sig" stroke="#1b2a44" stroke-width="2.5"/>
-  <text x="905" y="695" class="lbl">→ svart 12V (felles COM)</text>
+  <text x="905" y="695" class="lbl">→ grå 12V (felles COM)</text>
 
   <!-- NO colored lines already reach x=1000; extend into Lenco terminals -->
   <line x1="1000" y1="489" x2="1040" y2="505" class="sig" stroke="#9aa0a6"/>
@@ -222,11 +222,11 @@
   <text x="260" y="812" class="th">Funksjon</text>
   <text x="400" y="812" class="th">Lenco NO → ledning</text>
   <line x1="55" y1="820" x2="565" y2="820" stroke="#aab6cc"/>
-  <text x="60" y="842" class="td">K1</text><text x="150" y="842" class="td">GPIO33</text><text x="260" y="842" class="td">venstre opp (LU)</text><text x="400" y="842" class="td">hvit</text>
-  <text x="60" y="866" class="td">K2</text><text x="150" y="866" class="td">GPIO25</text><text x="260" y="866" class="td">venstre ned (LD)</text><text x="400" y="866" class="td">rød</text>
-  <text x="60" y="890" class="td">K3</text><text x="150" y="890" class="td">GPIO26</text><text x="260" y="890" class="td">høyre opp (RU)</text><text x="400" y="890" class="td">brun</text>
-  <text x="60" y="914" class="td">K4</text><text x="150" y="914" class="td">GPIO27</text><text x="260" y="914" class="td">høyre ned (RD)</text><text x="400" y="914" class="td">grønn</text>
-  <text x="60" y="940" class="note">COM (alle 4) → Lenco svart (12V). Reed-kontakt galvanisk skilt fra ESP. Pull-down 10k på IN → av ved boot.</text>
+  <text x="60" y="842" class="td">K1</text><text x="150" y="842" class="td">GPIO25</text><text x="260" y="842" class="td">babord opp (LU)</text><text x="400" y="842" class="td">hvit</text>
+  <text x="60" y="866" class="td">K2</text><text x="150" y="866" class="td">GPIO33</text><text x="260" y="866" class="td">babord ned (LD)</text><text x="400" y="866" class="td">rød</text>
+  <text x="60" y="890" class="td">K3</text><text x="150" y="890" class="td">GPIO27</text><text x="260" y="890" class="td">styrbord opp (RU)</text><text x="400" y="890" class="td">orange</text>
+  <text x="60" y="914" class="td">K4</text><text x="150" y="914" class="td">GPIO26</text><text x="260" y="914" class="td">styrbord ned (RD)</text><text x="400" y="914" class="td">grønn</text>
+  <text x="60" y="940" class="note">COM (alle 4) → Lenco grå (12V, panel: svart). Reed-kontakt galvanisk skilt fra ESP. Pull-down 10k på IN → av ved boot.</text>
 
   <!-- footer note -->
   <text x="600" y="788" class="note">Power-net: +5V (rød) = DC-DC ut → ESP 5V, relé-VCC, GPS VCC.</text>
@@ -236,7 +236,7 @@
   <text x="600" y="868" class="note">Interlock i fastvare: aldri U+D samme side samtidig.</text>
   <text x="600" y="888" class="note">Sjekk relémodulens trigger-polaritet før lodding (aktiv-høy antatt).</text>
   <text x="600" y="908" class="note">Mål at kontakten er ÅPEN gjennom hele boot før Lenco kobles til.</text>
-  <text x="600" y="934" class="note" font-weight="700" fill="#8e44ad">Relé vist forenklet. Komplett (direkte GPIO-drift): SIP-1A05</text>
+  <text x="600" y="934" class="note" font-weight="700" fill="#8e44ad">Relé vist forenklet. Komplett (direkte GPIO-drift): SIP-1A03</text>
   <text x="600" y="950" class="note" font-weight="700" fill="#8e44ad">pinne 1/7 kontakt, 3(+)←GPIO, 5(−)←GND, intern diode:</text>
   <text x="600" y="966" class="note" font-weight="700" fill="#8e44ad">se Autotrim_relekort_detalj.svg.</text>
 </svg>

@@ -18,14 +18,14 @@
   </style>
 
   <text x="40" y="36" class="title">Autotrim — relékort (reed-relé, direkte GPIO-drift)</text>
-  <text x="40" y="56" class="sub">SIP-1A05 tegnet som databladet: kontakt 1&#8211;7, spole 3(+)/5(&#8722;) med intern diode. Ingen transistor, ingen ekstern diode.</text>
-  <text x="40" y="74" class="sub">Spole: 3(+) &#8592; GPIO (3,3 V), 5(&#8722;) &#8592; GND.  Kontakt: 1 &#8592; 12V (svart, felles), 7 &#8594; Lenco-ledning.</text>
+  <text x="40" y="56" class="sub">SIP-1A03 tegnet som databladet: kontakt 1&#8211;7, spole 3(+)/5(&#8722;) med intern diode. Ingen transistor, ingen ekstern diode.</text>
+  <text x="40" y="74" class="sub">Spole: 3(+) &#8592; GPIO (3,3 V), 5(&#8722;) &#8592; GND.  Kontakt: 1 &#8592; 12V (grå kabel / svart panel, felles), 7 &#8594; Lenco-ledning.</text>
 
   <!-- K1 -->
   <text x="132" y="90" text-anchor="middle" class="ch">K1</text>
-  <text x="132" y="106" text-anchor="middle" class="note">venstre opp (LU)</text>
+  <text x="132" y="106" text-anchor="middle" class="note">babord opp (LU)</text>
   <rect x="64" y="126" width="134" height="96" rx="6" class="relaybox"/>
-  <text x="190" y="138" text-anchor="end" class="note" fill="#8e44ad">SIP-1A05</text>
+  <text x="190" y="138" text-anchor="end" class="note" fill="#8e44ad">SIP-1A03</text>
 
   <!-- contact 1..7 (open switch over top) -->
   <line x1="84" y1="216" x2="84" y2="144" class="w" stroke="#1b2a44"/>
@@ -58,16 +58,16 @@
   <line x1="180" y1="216" x2="180" y2="228" class="w" stroke="#9aa0a6"/>
 
   <!-- vertical net labels -->
-  <text x="84" y="228" transform="rotate(90 84 228)" class="pin">1 &#8594; 12V (svart)</text>
-  <text x="120" y="228" transform="rotate(90 120 228)" class="pin" fill="#8e44ad">3(+) &#8594; GPIO33</text>
+  <text x="84" y="228" transform="rotate(90 84 228)" class="pin">1 &#8594; 12V (grå)</text>
+  <text x="120" y="228" transform="rotate(90 120 228)" class="pin" fill="#8e44ad">3(+) &#8594; GPIO25</text>
   <text x="144" y="228" transform="rotate(90 144 228)" class="pin">5(&#8722;) &#8594; GND</text>
   <text x="180" y="228" transform="rotate(90 180 228)" class="pin">7 &#8594; Lenco hvit</text>
 
   <!-- K2 -->
   <text x="382" y="90" text-anchor="middle" class="ch">K2</text>
-  <text x="382" y="106" text-anchor="middle" class="note">venstre ned (LD)</text>
+  <text x="382" y="106" text-anchor="middle" class="note">babord ned (LD)</text>
   <rect x="314" y="126" width="134" height="96" rx="6" class="relaybox"/>
-  <text x="440" y="138" text-anchor="end" class="note" fill="#8e44ad">SIP-1A05</text>
+  <text x="440" y="138" text-anchor="end" class="note" fill="#8e44ad">SIP-1A03</text>
 
   <!-- contact 1..7 (open switch over top) -->
   <line x1="334" y1="216" x2="334" y2="144" class="w" stroke="#1b2a44"/>
@@ -100,16 +100,16 @@
   <line x1="430" y1="216" x2="430" y2="228" class="w" stroke="#c0392b"/>
 
   <!-- vertical net labels -->
-  <text x="334" y="228" transform="rotate(90 334 228)" class="pin">1 &#8594; 12V (svart)</text>
-  <text x="370" y="228" transform="rotate(90 370 228)" class="pin" fill="#8e44ad">3(+) &#8594; GPIO25</text>
+  <text x="334" y="228" transform="rotate(90 334 228)" class="pin">1 &#8594; 12V (grå)</text>
+  <text x="370" y="228" transform="rotate(90 370 228)" class="pin" fill="#8e44ad">3(+) &#8594; GPIO33</text>
   <text x="394" y="228" transform="rotate(90 394 228)" class="pin">5(&#8722;) &#8594; GND</text>
   <text x="430" y="228" transform="rotate(90 430 228)" class="pin">7 &#8594; Lenco rød</text>
 
   <!-- K3 -->
   <text x="632" y="90" text-anchor="middle" class="ch">K3</text>
-  <text x="632" y="106" text-anchor="middle" class="note">høyre opp (RU)</text>
+  <text x="632" y="106" text-anchor="middle" class="note">styrbord opp (RU)</text>
   <rect x="564" y="126" width="134" height="96" rx="6" class="relaybox"/>
-  <text x="690" y="138" text-anchor="end" class="note" fill="#8e44ad">SIP-1A05</text>
+  <text x="690" y="138" text-anchor="end" class="note" fill="#8e44ad">SIP-1A03</text>
 
   <!-- contact 1..7 (open switch over top) -->
   <line x1="584" y1="216" x2="584" y2="144" class="w" stroke="#1b2a44"/>
@@ -142,16 +142,16 @@
   <line x1="680" y1="216" x2="680" y2="228" class="w" stroke="#8b5a2b"/>
 
   <!-- vertical net labels -->
-  <text x="584" y="228" transform="rotate(90 584 228)" class="pin">1 &#8594; 12V (svart)</text>
-  <text x="620" y="228" transform="rotate(90 620 228)" class="pin" fill="#8e44ad">3(+) &#8594; GPIO26</text>
+  <text x="584" y="228" transform="rotate(90 584 228)" class="pin">1 &#8594; 12V (grå)</text>
+  <text x="620" y="228" transform="rotate(90 620 228)" class="pin" fill="#8e44ad">3(+) &#8594; GPIO27</text>
   <text x="644" y="228" transform="rotate(90 644 228)" class="pin">5(&#8722;) &#8594; GND</text>
-  <text x="680" y="228" transform="rotate(90 680 228)" class="pin">7 &#8594; Lenco brun</text>
+  <text x="680" y="228" transform="rotate(90 680 228)" class="pin">7 &#8594; Lenco orange</text>
 
   <!-- K4 -->
   <text x="882" y="90" text-anchor="middle" class="ch">K4</text>
-  <text x="882" y="106" text-anchor="middle" class="note">høyre ned (RD)</text>
+  <text x="882" y="106" text-anchor="middle" class="note">styrbord ned (RD)</text>
   <rect x="814" y="126" width="134" height="96" rx="6" class="relaybox"/>
-  <text x="940" y="138" text-anchor="end" class="note" fill="#8e44ad">SIP-1A05</text>
+  <text x="940" y="138" text-anchor="end" class="note" fill="#8e44ad">SIP-1A03</text>
 
   <!-- contact 1..7 (open switch over top) -->
   <line x1="834" y1="216" x2="834" y2="144" class="w" stroke="#1b2a44"/>
@@ -184,14 +184,14 @@
   <line x1="930" y1="216" x2="930" y2="228" class="w" stroke="#27ae60"/>
 
   <!-- vertical net labels -->
-  <text x="834" y="228" transform="rotate(90 834 228)" class="pin">1 &#8594; 12V (svart)</text>
-  <text x="870" y="228" transform="rotate(90 870 228)" class="pin" fill="#8e44ad">3(+) &#8594; GPIO27</text>
+  <text x="834" y="228" transform="rotate(90 834 228)" class="pin">1 &#8594; 12V (grå)</text>
+  <text x="870" y="228" transform="rotate(90 870 228)" class="pin" fill="#8e44ad">3(+) &#8594; GPIO26</text>
   <text x="894" y="228" transform="rotate(90 894 228)" class="pin">5(&#8722;) &#8594; GND</text>
   <text x="930" y="228" transform="rotate(90 930 228)" class="pin">7 &#8594; Lenco grønn</text>
 
 
   <!-- caveat -->
-  <text x="40" y="372" class="note" fill="#8a5a00">Merk: 3,3 V ligger under spolens must-operate (3,75 V). Test at alle 4 trekker sikkert inn — hvis ikke, mat spolen fra 5V (krever da en bryter pr. kanal).</text>
+  <text x="40" y="372" class="note" fill="#8a5a00">Merk: SIP-1A03 er 3V-relé (must-operate ~2,25 V) → 3,3 V GPIO gir spennings-margin. Men 3V-spolen trekker mer strøm (lav coil-R) — mål coil-motstand; er strømmen nær GPIO-grensen (~20–40 mA), driv via ULN2803/MOSFET.</text>
 
   <!-- board layout sketch (matcher bildet) -->
   <text x="40" y="408" class="th">Kort-layout (som bygd)</text>
@@ -200,26 +200,26 @@
   <rect x="70" y="432" width="110" height="26" class="green"/><rect x="200" y="432" width="110" height="26" class="green"/>
   <text x="190" y="450" text-anchor="middle" class="tiny">grønne term. (8): ESP-side</text>
   <!-- relays middle -->
-  <rect x="95" y="476" width="190" height="22" rx="3" fill="#222" /><text x="190" y="491" text-anchor="middle" class="tiny" fill="#fff">SIP-1A05  K1</text>
-  <rect x="95" y="504" width="190" height="22" rx="3" fill="#222" /><text x="190" y="519" text-anchor="middle" class="tiny" fill="#fff">SIP-1A05  K2</text>
-  <rect x="95" y="532" width="190" height="22" rx="3" fill="#222" /><text x="190" y="547" text-anchor="middle" class="tiny" fill="#fff">SIP-1A05  K3</text>
-  <rect x="95" y="560" width="190" height="22" rx="3" fill="#222" /><text x="190" y="575" text-anchor="middle" class="tiny" fill="#fff">SIP-1A05  K4</text>
+  <rect x="95" y="476" width="190" height="22" rx="3" fill="#222" /><text x="190" y="491" text-anchor="middle" class="tiny" fill="#fff">SIP-1A03  K1</text>
+  <rect x="95" y="504" width="190" height="22" rx="3" fill="#222" /><text x="190" y="519" text-anchor="middle" class="tiny" fill="#fff">SIP-1A03  K2</text>
+  <rect x="95" y="532" width="190" height="22" rx="3" fill="#222" /><text x="190" y="547" text-anchor="middle" class="tiny" fill="#fff">SIP-1A03  K3</text>
+  <rect x="95" y="560" width="190" height="22" rx="3" fill="#222" /><text x="190" y="575" text-anchor="middle" class="tiny" fill="#fff">SIP-1A03  K4</text>
   <!-- blue terminals bottom -->
   <rect x="70" y="596" width="110" height="26" class="blue"/><rect x="200" y="596" width="110" height="26" class="blue"/>
   <text x="190" y="614" text-anchor="middle" class="tiny">blå term. (8): Lenco-side</text>
-  <text x="55" y="648" class="note">Forslag: grønne = GPIO33,25,26,27 + GND (+5V).</text>
-  <text x="55" y="664" class="note">Blå = 12V (svart) + hvit, rød, brun, grønn. Tilpass faktiske spor.</text>
+  <text x="55" y="648" class="note">Forslag: grønne = GPIO25,33,27,26 + GND (+5V).</text>
+  <text x="55" y="664" class="note">Blå = 12V (grå) + hvit, rød, orange, grønn. Tilpass faktiske spor.</text>
 
   <!-- channel table -->
   <rect x="370" y="400" width="670" height="290" rx="8" fill="#eef2f8" stroke="#aab6cc" stroke-width="1.5"/>
   <text x="392" y="426" class="th">Kanal</text><text x="500" y="426" class="th">GPIO (3+)</text><text x="640" y="426" class="th">Funksjon</text><text x="860" y="426" class="th">Kontakt 7 &#8594; Lenco</text>
   <line x1="386" y1="434" x2="1024" y2="434" stroke="#aab6cc"/>
-  <text x="392" y="458" class="td">K1</text><text x="500" y="458" class="td">GPIO33</text><text x="640" y="458" class="td">venstre opp (LU)</text><text x="860" y="458" class="td">hvit</text>
-  <text x="392" y="486" class="td">K2</text><text x="500" y="486" class="td">GPIO25</text><text x="640" y="486" class="td">venstre ned (LD)</text><text x="860" y="486" class="td">rød</text>
-  <text x="392" y="514" class="td">K3</text><text x="500" y="514" class="td">GPIO26</text><text x="640" y="514" class="td">høyre opp (RU)</text><text x="860" y="514" class="td">brun</text>
-  <text x="392" y="542" class="td">K4</text><text x="500" y="542" class="td">GPIO27</text><text x="640" y="542" class="td">høyre ned (RD)</text><text x="860" y="542" class="td">grønn</text>
+  <text x="392" y="458" class="td">K1</text><text x="500" y="458" class="td">GPIO25</text><text x="640" y="458" class="td">babord opp (LU)</text><text x="860" y="458" class="td">hvit</text>
+  <text x="392" y="486" class="td">K2</text><text x="500" y="486" class="td">GPIO33</text><text x="640" y="486" class="td">babord ned (LD)</text><text x="860" y="486" class="td">rød</text>
+  <text x="392" y="514" class="td">K3</text><text x="500" y="514" class="td">GPIO27</text><text x="640" y="514" class="td">styrbord opp (RU)</text><text x="860" y="514" class="td">orange</text>
+  <text x="392" y="542" class="td">K4</text><text x="500" y="542" class="td">GPIO26</text><text x="640" y="542" class="td">styrbord ned (RD)</text><text x="860" y="542" class="td">grønn</text>
   <text x="392" y="578" class="th">Felles</text>
-  <text x="392" y="600" class="td">Alle pinne 1 &#8594; 12V (Lenco svart).  Alle pinne 5(&#8722;) &#8594; GND.</text>
+  <text x="392" y="600" class="td">Alle pinne 1 &#8594; 12V (Lenco grå).  Alle pinne 5(&#8722;) &#8594; GND.</text>
   <text x="392" y="622" class="td">Pull-down 10k anbefalt fra hver GPIO til GND (av ved boot).</text>
   <text x="392" y="650" class="note">Kontakt er upolarisert (1/7 kan byttes). Reed-kontakt galvanisk skilt fra spole/ESP.</text>
   <text x="392" y="668" class="note">Manuelle Lenco-brytere uberørt (parallellkobling).</text>

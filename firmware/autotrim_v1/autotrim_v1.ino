@@ -154,7 +154,7 @@ static const uint8_t  PARAMS_VERSION = 2;
 void params_setDefaults(AutotrimParams &p) {
   p.magic           = PARAMS_MAGIC;
   p.version         = PARAMS_VERSION;
-  p.autoEnabled     = 0;            // av som default — føreren slår på
+  p.autoEnabled     = 1;            // PÅ som default — virker uten mobil/BLE (fartslås + fix gater fortsatt ACTIVE)
   p.speedOnKn       = 17.0f;
   p.speedOffKn      = 14.0f;
   p.rollSetpointDeg = 0.0f;
@@ -227,7 +227,12 @@ public:
     if (!_ok || dt <= 0.0f) return;
     imu::Vector<3> a = g_bno.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
     imu::Vector<3> g = g_bno.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
-    _aX = a.x(); _aY = a.y(); _aZ = a.z();
+
+    // Medianfilter (vindu 5) på aX/aY — fjerner spikes/I2C-glitcher før roll regnes.
+    _mx[_mi] = a.x(); _my[_mi] = a.y(); _mi = (_mi + 1) % 5; if (_mcount < 5) _mcount++;
+    _aX = med(_mx, _mcount); _aY = med(_my, _mcount); _aZ = a.z();
+    _yaw = g.x();   // yaw-rate (dps, om vertikal X-akse) — for svingdeteksjon
+
     float amag = sqrtf(_aX*_aX + _aY*_aY + _aZ*_aZ);
     _sane = (amag > 4.0f && amag < 25.0f) && !isnan(amag);
 
@@ -246,12 +251,20 @@ public:
   bool  sane()        const { return _sane; }
   float rollDeg()     const { return _roll - _offset; }
   float rollRateDps() const { return _rate; }
+  float yawRateDps()  const { return _yaw; }   // for svingdeteksjon
   float accX()        const { return _aX; }
   float accY()        const { return _aY; }
 
 private:
+  static float med(const float* b, int n) {          // median av n første elementer
+    float c[5]; for (int i = 0; i < n; i++) c[i] = b[i];
+    for (int i = 0; i < n; i++) for (int j = i+1; j < n; j++)
+      if (c[j] < c[i]) { float t = c[i]; c[i] = c[j]; c[j] = t; }
+    return c[n/2];
+  }
   bool  _ok = false, _sane = true, _init = false;
-  float _roll = 0, _rate = 0, _aX = 0, _aY = 0, _aZ = 0, _offset = 0;
+  float _roll = 0, _rate = 0, _yaw = 0, _aX = 0, _aY = 0, _aZ = 0, _offset = 0;
+  float _mx[5] = {0}, _my[5] = {0}; int _mi = 0, _mcount = 0;   // medianbuffer
 };
 
 // ============================================================================
@@ -352,16 +365,26 @@ static const float CTRL_STEP_DT         = 0.50f;    // effektivt integrasjons-dt
 static const float BIG_ERR_DEG          = 3.0f;     // feil > dette → aggressiv puls
 static const float MAX_PULSE_MS         = 4000.0f;  // maks enkelt-puls
 
+// Sving-release (A): frys utretting + retraher til nøytral når båten svinger,
+// så skroget får krenge fritt inn i svingen. Fartsadaptiv terskel på lateral-akse
+// a_lat = v·ω_yaw (m/s²) — dekker hele fartsområdet 17–36 kn (samme "hvor hardt
+// svingen kjennes", uavhengig av treg-tight vs. rask-vid). Tunes ved re-flash.
+static const float KN2MS             = 0.514444f;
+static const float DEG2RAD           = 0.0174532925f;
+static const float TURN_ON_LATACC    = 1.5f;    // m/s² — start sving-release
+static const float TURN_OFF_LATACC   = 1.0f;    // m/s² — slutt (hysterese)
+static const float TURN_DEBOUNCE_MS  = 800.0f;  // hold "sving" til metrikk < av i denne tiden
+
 class Control {
 public:
-  void begin(Relays *relays) { _r = relays; setState(State::BOOT_UP); }
+  void begin(Relays *relays) { _r = relays; _posLeftMs = _posRightMs = 0; setState(State::STANDBY); }  // ingen boot-homing
 
   void requestBothUp() { _recalMs = 1e9f; }
   void requestRecal()  { _recalMs = 2e9f; }
   void requestTestPulse(int ch) { _testCh = ch; _testMs = 1500.0f; }  // 0=LU,1=LD,2=RU,3=RD
   void requestTestOff()         { _testCh = -1; _testMs = 0; }
 
-  void update(float dt, float rollDeg, float rollRateDps, bool imuSane,
+  void update(float dt, float rollDeg, float rollRateDps, float yawRateDps, bool imuSane,
               float sogKn, bool gpsFix, const AutotrimParams &p) {
     if (!_r || dt <= 0) return;
     _stateTimeMs += dt * 1000.0f;
@@ -391,11 +414,10 @@ public:
 
     switch (_state) {
       case State::BOOT_UP: {
-        lu = true; ru = true;
-        // Kort homing (STARTUP_UP_MS = 1 s). NB: garanterer IKKE fullt opp fra vilkårlig
-        // startposisjon — antar planene er nær opp ved boot. Bruk «Begge opp»/re-kal for
-        // full nullstilling (de kjører hele slaglengden).
-        if (_stateTimeMs >= (float)STARTUP_UP_MS) { _posLeftMs = 0; _posRightMs = 0; setState(State::STANDBY); }
+        // Boot-homing FJERNET: oppstart uten 1 s opp -> ingen trim-rykk ved (re)boot.
+        // (Posisjonsestimat antas 0 = oppe; bruk «Begge opp» for eksplisitt nullstilling.)
+        _posLeftMs = 0; _posRightMs = 0;
+        setState(State::STANDBY);
         break;
       }
       case State::FAULT:
@@ -420,6 +442,19 @@ public:
         if (sogKn < p.speedOffKn && !bypass) _autoLatched = false;
         bool keep = p.autoEnabled && imuSane && (gpsFix || bypass) && (_autoLatched || bypass);
         if (!keep) { requestBothUp(); setState(State::STANDBY); break; }
+
+        // --- Sving-release (A): fartsadaptiv. a_lat = |v·ω_yaw| (m/s²).
+        //     I sving: frys utretting og retraher til nøytral → skroget krenger fritt inn.
+        float latAcc = fabsf(sogKn * KN2MS) * fabsf(yawRateDps * DEG2RAD);
+        if (latAcc > TURN_ON_LATACC)                 { _inTurn = true;  _turnOffMs = TURN_DEBOUNCE_MS; }
+        else if (_inTurn && latAcc < TURN_OFF_LATACC) { _turnOffMs -= dt*1000.0f; if (_turnOffMs <= 0) _inTurn = false; }
+        if (_inTurn) {
+          _active = Side::NONE; _trimFrac = 0; _settleMs = 0;
+          float neutMs = constrain(p.neutralFrac, 0.0f, 1.0f) * p.fullStrokeMs;
+          if (_posLeftMs  > neutMs + POS_DEADBAND_MS) lu = true;   // retraher opp
+          if (_posRightMs > neutMs + POS_DEADBAND_MS) ru = true;
+          break;                                                   // hopp over roll-PI
+        }
 
         _settleMs -= dt * 1000.0f;
         if (_settleMs < 0) _settleMs = 0;
@@ -530,6 +565,7 @@ private:
   bool    _autoLatched = false; float _recalMs = 0;
   int     _testCh = -1; float _testMs = 0;
   float   _holdLUms = 0, _holdLDms = 0, _holdRUms = 0, _holdRDms = 0;
+  bool    _inTurn = false; float _turnOffMs = 0;   // sving-release (hysterese)
 };
 
 // ============================================================================
@@ -686,71 +722,4 @@ void setup() {
     Serial.println("KRASJ oppdaget — sletter NVS og starter om...");
     delay(100);
     nvs_flash_erase();
-    ESP.restart();
-  }
-
-  relays.begin();        // 1) trygt: alle reléer av
-  params_load(params);   // 2) parametere
-  params.testBypass = 0; //    sikkerhet: testmodus ALLTID av ved boot
-  ble.begin(&params);    // 3) BLE
-  gps.begin();
-  bool imuOk = imuDev.begin();
-  control.begin(&relays); // 4) kontroll (starter i BOOT_UP -> begge opp 3 s)
-
-  Serial.printf("Autotrim v1 klar. IMU=%s\n", imuOk ? "OK" : "FEIL");
-
-  uint32_t now = millis();
-  tImu = tCtrl = tTele = tDbg = now;
-  tBleWd = lastConnMs = now;
-}
-
-void loop() {
-  uint32_t now = millis();
-
-  gps.poll();
-  handleCommands();
-
-  if (now - tImu >= IMU_PERIOD_MS) {
-    float dt = (now - tImu) / 1000.0f;
-    tImu = now;
-    imuDev.update(dt, params);
-  }
-  if (now - tCtrl >= CTRL_PERIOD_MS) {
-    float dt = (now - tCtrl) / 1000.0f;
-    tCtrl = now;
-    bool imuSane = imuDev.ok() && imuDev.sane();
-    control.update(dt, imuDev.rollDeg() + params.mountingOffsetDeg, imuDev.rollRateDps(), imuSane,
-                   gps.sogKn(), gps.hasFix(), params);
-  }
-  if (now - tTele >= TELE_PERIOD_MS) {
-    tTele = now;
-    publishTelemetry();
-  }
-
-  if (now - tDbg >= 500) {                 // 2 Hz USB-debug
-    tDbg = now;
-    const char* st[] = {"BOOT_UP","STANDBY","ACTIVE","FAULT"};
-    Serial.printf("roll:%+6.1f rate:%+6.1f | SOG:%4.1f fix:%d sats:%2d | %-7s rel:0x%X | imu ok=%d sane=%d | heap=%u ble=%s\n",
-                  imuDev.rollDeg() + params.mountingOffsetDeg, imuDev.rollRateDps(), gps.sogKn(), gps.hasFix(), gps.sats(),
-                  st[(uint8_t)control.state() & 3], relays.bits(),
-                  (int)imuDev.ok(), (int)imuDev.sane(),
-                  (unsigned)ESP.getFreeHeap(), ble.connected() ? "til" : "fra");
-  }
-
-  // ---- BLE-watchdog (hver 5 s) — gjenoppretter myk stack-død uten MCU-reboot ----
-  if (now - tBleWd >= 5000) {
-    tBleWd = now;
-    if (ble.connected()) {
-      lastConnMs = now;
-    } else {
-      NimBLEDevice::startAdvertising();              // sørg for at vi annonserer
-      // Langvarig frakoblet ELLER lav heap -> full re-init av BLE-stacken.
-      // Skjer kun når ingen er tilkoblet, så en aktiv justeringsøkt avbrytes aldri.
-      if (now - lastConnMs > 90000UL || ESP.getFreeHeap() < 20000U) {
-        Serial.println("BLE-watchdog: re-init av BLE-stacken");
-        ble.restart();
-        lastConnMs = now;                            // ny 90 s-frist før evt. ny re-init
-      }
-    }
-  }
-}
+    ES

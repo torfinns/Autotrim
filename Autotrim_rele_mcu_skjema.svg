@@ -1,0 +1,116 @@
+<svg viewBox="0 0 1000 640" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .bg{fill:#ffffff}
+    .title{font-size:22px;font-weight:700;fill:#1b2a44}
+    .sub{font-size:12px;fill:#516079}
+    .box{fill:#eef2f8;stroke:#1b2a44;stroke-width:2}
+    .lbl{font-size:13px;font-weight:700;fill:#1b2a44}
+    .pin{font-size:12px;fill:#1b2a44;font-weight:700}
+    .note{font-size:11px;fill:#516079}
+    .sig{stroke:#2e9bff;stroke-width:2.5;fill:none}
+    .coil{stroke:#8e44ad;stroke-width:2.5;fill:none}
+    .com{stroke:#9aa4b2;stroke-width:3;fill:none}
+    .reed{stroke:#2b3a55;stroke-width:2.5;fill:none}
+    .couple{stroke:#8e44ad;stroke-width:1.4;stroke-dasharray:4 3;fill:none}
+    .gnd{stroke:#2b3a55;stroke-width:2;fill:none}
+    .wWhite{stroke:#b7c0d0;stroke-width:3.5;fill:none}
+    .wRed{stroke:#e7553b;stroke-width:3.5;fill:none}
+    .wOrange{stroke:#e8912b;stroke-width:3.5;fill:none}
+    .wGreen{stroke:#27c08a;stroke-width:3.5;fill:none}
+    .dest{font-size:12px;font-weight:700;fill:#1b2a44}
+    .kl{font-size:12px;font-weight:700;fill:#1b2a44}
+    .grp{fill:none;stroke:#aab6cc;stroke-width:1.5;stroke-dasharray:5 4}
+  </style>
+
+  <rect x="0" y="0" width="1000" height="640" class="bg"/>
+  <text x="30" y="32" class="title">Autotrim — relékort: MCU → reed-relé → Lenco/trimplan</text>
+  <text x="30" y="52" class="sub">Hvert relé (SIP-1A03) = solenoide (spole, styrt av GPIO) magnetisk koblet til en reed-kontakt (NO).</text>
+  <text x="30" y="68" class="sub">Reed slutter 12V (COM) til funksjonslinja — parallelt med de manuelle Lenco-bryterne.</text>
+
+  <!-- ESP32 -->
+  <rect x="20" y="120" width="140" height="360" rx="8" class="box"/>
+  <text x="90" y="145" text-anchor="middle" class="lbl">ESP32</text>
+  <text x="90" y="162" text-anchor="middle" class="note">relé-utganger</text>
+  <text x="34" y="156" class="pin">GPIO25 · LU</text>
+  <text x="34" y="256" class="pin">GPIO33 · LD</text>
+  <text x="34" y="356" class="pin">GPIO27 · RU</text>
+  <text x="34" y="456" class="pin">GPIO26 · RD</text>
+
+  <!-- 12V COM bus (grå) -->
+  <path class="com" d="M330 120 V488"/>
+  <circle cx="330" cy="120" r="4" fill="#9aa4b2"/>
+  <text x="338" y="112" class="dest">12V inn</text>
+  <text x="338" y="128" class="note">grå (skjøtekabel) · svart (panel)</text>
+
+  <!-- ================= RELÉ-LANER (K1..K4) ================= -->
+  <!-- K1 LU: coilY=152 reedY=188 -->
+  <path class="sig" d="M160 152 H368"/>
+  <path class="coil" d="M368 152 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0"/>
+  <path class="gnd" d="M458 152 H482 M482 145 V159 M486 148 V156 M490 150.5 V153.5"/>
+  <text x="462" y="140" class="note">GND</text>
+  <path class="com" d="M330 188 H360"/>
+  <path class="reed" d="M360 188 H405"/>
+  <circle cx="405" cy="188" r="2.5" fill="#2b3a55"/>
+  <path class="reed" d="M480 188 H447 L413 181"/>
+  <path class="couple" d="M420 160 V181"/>
+  <text x="300" y="182" class="note">COM</text>
+  <text x="484" y="192" class="note">NO</text>
+  <path class="wWhite" d="M480 188 H560"/>
+  <text x="568" y="185" class="kl">K1 · LU</text>
+  <text x="568" y="200" class="dest">hvit → Venstre plan OPP</text>
+
+  <!-- K2 LD: coilY=252 reedY=288 -->
+  <path class="sig" d="M160 252 H368"/>
+  <path class="coil" d="M368 252 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0"/>
+  <path class="gnd" d="M458 252 H482 M482 245 V259 M486 248 V256 M490 250.5 V253.5"/>
+  <path class="com" d="M330 288 H360"/>
+  <path class="reed" d="M360 288 H405"/>
+  <circle cx="405" cy="288" r="2.5" fill="#2b3a55"/>
+  <path class="reed" d="M480 288 H447 L413 281"/>
+  <path class="couple" d="M420 260 V281"/>
+  <path class="wRed" d="M480 288 H560"/>
+  <text x="568" y="285" class="kl">K2 · LD</text>
+  <text x="568" y="300" class="dest">rød → Venstre plan NED</text>
+
+  <!-- K3 RU: coilY=352 reedY=388 -->
+  <path class="sig" d="M160 352 H368"/>
+  <path class="coil" d="M368 352 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0"/>
+  <path class="gnd" d="M458 352 H482 M482 345 V359 M486 348 V356 M490 350.5 V353.5"/>
+  <path class="com" d="M330 388 H360"/>
+  <path class="reed" d="M360 388 H405"/>
+  <circle cx="405" cy="388" r="2.5" fill="#2b3a55"/>
+  <path class="reed" d="M480 388 H447 L413 381"/>
+  <path class="couple" d="M420 360 V381"/>
+  <path class="wOrange" d="M480 388 H560"/>
+  <text x="568" y="385" class="kl">K3 · RU</text>
+  <text x="568" y="400" class="dest">orange → Høyre plan OPP  <tspan class="note" fill="#516079">(panel: brun)</tspan></text>
+
+  <!-- K4 RD: coilY=452 reedY=488 -->
+  <path class="sig" d="M160 452 H368"/>
+  <path class="coil" d="M368 452 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0 a7.5 7.5 0 1 1 15 0"/>
+  <path class="gnd" d="M458 452 H482 M482 445 V459 M486 448 V456 M490 450.5 V453.5"/>
+  <path class="com" d="M330 488 H360"/>
+  <path class="reed" d="M360 488 H405"/>
+  <circle cx="405" cy="488" r="2.5" fill="#2b3a55"/>
+  <path class="reed" d="M480 488 H447 L413 481"/>
+  <path class="couple" d="M420 460 V481"/>
+  <path class="wGreen" d="M480 488 H560"/>
+  <text x="568" y="485" class="kl">K4 · RD</text>
+  <text x="568" y="500" class="dest">grønn → Høyre plan NED</text>
+
+  <!-- plan-grupper -->
+  <rect x="558" y="168" width="410" height="150" class="grp" rx="6"/>
+  <text x="566" y="164" class="note">VENSTRE trimplan</text>
+  <rect x="558" y="368" width="410" height="150" class="grp" rx="6"/>
+  <text x="566" y="364" class="note">HØYRE trimplan</text>
+
+  <!-- forklaring på symbol -->
+  <text x="360" y="536" class="note" fill="#8e44ad">━ spole (solenoide, GPIO→GND)   ┄ magnetisk kobling   ╱ reed-kontakt (NO)</text>
+
+  <!-- legend -->
+  <rect x="30" y="548" width="938" height="76" rx="8" fill="#eef2f8" stroke="#aab6cc" stroke-width="1.5"/>
+  <text x="46" y="570" class="lbl">Merknader</text>
+  <text x="46" y="588" class="note">• Interlock i fastvare: aldri OPP+NED på samme side (K1+K2 eller K3+K4). Spole av ved boot (10 kΩ pull-down GPIO→GND).</text>
+  <text x="46" y="606" class="note">• SIP-1A03 = 3V-relé (must-operate ~2,25V) → 3,3 V GPIO holder på spenning. 3V-spolen trekker mer strøm; nær GPIO-grensen: driv via ULN2803/MOSFET,</text>
+  <text x="46" y="620" class="note">  eller bytt reed → foto-MOSFET SSR (isolert, rett fra GPIO). Manuell Lenco-betjening er alltid uberørt (parallellkobling).</text>
+</svg>
