@@ -47,6 +47,12 @@ Kun **RU** (brun ↔ orange) og **12 V** (svart ↔ grå) skifter farge mellom s
 - Ingen anti-windup: position-deadbåndet absorberer støy på deadband-grensen
 - Sekvensering: motparten trekkes alltid opp til < 10 % av slaglengde før den aktive siden kjøres ned
 
+**Sving-release (verifisert-kompilert, ikke sjøtestet):**
+- Lateralakselerasjon `a_lat = |v · ω_yaw|` (fart fra GPS × yaw-rate fra gyro-X) — fartsadaptiv terskel som dekker hele fartsområdet uavhengig av om svingen er trang/rolig eller vid/rask
+- Over `TURN_ON_LATACC` (1,5 m/s²): fryser utretting og retraherer begge plan til nøytral, så skroget får krenge fritt inn i svingen
+- Under `TURN_OFF_LATACC` (1,0 m/s², hysterese) i `TURN_DEBOUNCE_MS` (800 ms) sammenhengende: går tilbake til normal roll-regulering
+- Bevisst **ikke** brukt: `v·ω`-subtraksjon fra aY for å kompensere sideakselerasjon i selve rollmålingen — kalibreringsdata viste svak korrelasjon (r=0,15) og forverret roll-estimatet, siden båten koordinerer svingen selv
+
 **Parametere som faktisk brukes:**
 - `kP` (GUI viser ×100): proporsjonalforsterkning — typisk 10–20
 - `rollDeadbandDeg`: ingen korrigering innenfor ±X grader
@@ -61,8 +67,9 @@ Kun **RU** (brun ↔ orange) og **12 V** (svart ↔ grå) skifter farge mellom s
 ## Verifisert på benk (2026-07-18)
 
 - GPS: 38400 baud (ikke u-blox-default 115200)
-- IMU-fortegn: `rollSign = +1` (styrbord lav → positiv roll på skjermen)
-- `gyroSign`-feltet ignoreres — `rollSign` brukes for begge akser
+- IMU-fortegn: `rollSign = -1` (styrbord lav → positiv roll på skjermen)
+- `gyroSign`-feltet ignoreres — `rollSign` brukes for begge akser (fortegn bakt inn via geometrien `d(atan2)/dt = -ωz`)
+- Akselerometer aX/aY median-5-filtrert før roll beregnes (fjerner I2C-glitcher/spikes)
 - `PIN_BNO_RST = -1` — RST på BNO055 er ikke koblet til ESP32
 - BLE: NimBLE 2.5.0 (se merknad under)
 - GPIO-pins for OPP/NED byttet ift. opprinnelig kobling
@@ -82,7 +89,7 @@ Installer i Arduino IDE: kopier `firmware/test/libraries/NimBLE-Arduino/` til `D
 For å unngå at BLE «henger seg» og ikke kommer i gang igjen uten reflash:
 
 - **Ingen bonding:** `setSecurityAuth(false,false,false)` + `deleteAllBonds()` ved hver init.
-- **BLE-watchdog:** hvert 5. s; hvis frakoblet i > 90 s eller fri heap < 20 KB, re-initialiseres BLE-stacken (`deinit`+`begin`) uten å reboote MCU-en.
+- **BLE-watchdog (dempet):** hvert 5. s, kun når frakoblet — holder annonseringen i live (lettvekt). Full re-init (`deinit`+`begin`) skjer KUN ved reell svikt: fri heap < 15 KB. Ikke periodisk re-init lenger — det var årsaken til sporadiske reboots.
 - **NVS-recovery:** ved krasj-reset (`ESP_RST_PANIC`/WDT) slettes NVS og MCU-en starter om. **OBS:** sletter hele NVS inkl. lagrede parametere (faller til default).
 
 ## Flash / opplasting

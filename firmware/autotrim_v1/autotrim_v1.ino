@@ -722,4 +722,72 @@ void setup() {
     Serial.println("KRASJ oppdaget — sletter NVS og starter om...");
     delay(100);
     nvs_flash_erase();
-    ES
+    ESP.restart();
+  }
+
+  relays.begin();        // 1) trygt: alle reléer av
+  params_load(params);   // 2) parametere
+  params.testBypass = 0; //    sikkerhet: testmodus ALLTID av ved boot
+  ble.begin(&params);    // 3) BLE
+  gps.begin();
+  bool imuOk = imuDev.begin();
+  control.begin(&relays); // 4) kontroll — starter i STANDBY (ingen boot-homing, ingen 1 s opp)
+
+  Serial.printf("Autotrim v1 klar. IMU=%s\n", imuOk ? "OK" : "FEIL");
+
+  uint32_t now = millis();
+  tImu = tCtrl = tTele = tDbg = now;
+  tBleWd = lastConnMs = now;
+}
+
+void loop() {
+  uint32_t now = millis();
+
+  gps.poll();
+  handleCommands();
+
+  if (now - tImu >= IMU_PERIOD_MS) {
+    float dt = (now - tImu) / 1000.0f;
+    tImu = now;
+    imuDev.update(dt, params);
+  }
+  if (now - tCtrl >= CTRL_PERIOD_MS) {
+    float dt = (now - tCtrl) / 1000.0f;
+    tCtrl = now;
+    bool imuSane = imuDev.ok() && imuDev.sane();
+    control.update(dt, imuDev.rollDeg() + params.mountingOffsetDeg, imuDev.rollRateDps(), imuDev.yawRateDps(), imuSane,
+                   gps.sogKn(), gps.hasFix(), params);
+  }
+  if (now - tTele >= TELE_PERIOD_MS) {
+    tTele = now;
+    publishTelemetry();
+  }
+
+  if (now - tDbg >= 500) {                 // 2 Hz USB-debug
+    tDbg = now;
+    const char* st[] = {"BOOT_UP","STANDBY","ACTIVE","FAULT"};
+    Serial.printf("roll:%+6.1f rate:%+6.1f | SOG:%4.1f fix:%d sats:%2d | %-7s rel:0x%X | imu ok=%d sane=%d | heap=%u ble=%s\n",
+                  imuDev.rollDeg() + params.mountingOffsetDeg, imuDev.rollRateDps(), gps.sogKn(), gps.hasFix(), gps.sats(),
+                  st[(uint8_t)control.state() & 3], relays.bits(),
+                  (int)imuDev.ok(), (int)imuDev.sane(),
+                  (unsigned)ESP.getFreeHeap(), ble.connected() ? "til" : "fra");
+  }
+
+  // ---- BLE-watchdog (hver 5 s) — DEMPET, men beholdt ----
+  // Å være frakoblet er NORMALTILSTAND (ingen mobil tilkoblet) — ikke en feil.
+  // Derfor: hold annonseringen i live (lettvekt), men gjør IKKE periodisk full
+  // re-init (det var den som av og til krasjet -> reboot -> NVS-slett). Full
+  // re-init KUN ved reell svikt: kritisk lav heap (lekkasje).
+  if (now - tBleWd >= 5000) {
+    tBleWd = now;
+    if (ble.connected()) {
+      lastConnMs = now;
+    } else {
+      NimBLEDevice::startAdvertising();              // hold annonsering i live
+      if (ESP.getFreeHeap() < 15000U) {              // ekte svikt -> full re-init
+        Serial.println("BLE-watchdog: kritisk lav heap -> re-init");
+        ble.restart();
+      }
+    }
+  }
+}
