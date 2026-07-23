@@ -165,7 +165,7 @@ Bare **ett** trimplan deployeres om gangen — det andre holdes/parkeres helt op
 
 Planene har ingen posisjonssensor. Posisjon estimeres med ren tidsintegrasjon:
 
-- **Ved hver oppstart:** kort homing — kjør **begge plan opp i 1 s** som referansenudge. NB: 1 s garanterer ikke fullt opp fra vilkårlig startposisjon (antar planene er nær oppe ved boot). Bruk «Begge opp»/re-kal for full nullstilling (kjører hele slaglengden).
+- **Ved hver oppstart:** boot-homing er **fjernet** i fastvaren (ga trim-rykk ved hver reboot). Systemet starter i STANDBY med posisjonsestimat = 0 (antatt oppe). Bruk «Begge opp»/re-kal for eksplisitt full nullstilling (kjører hele slaglengden).
 - Deretter logges **antall tideler (0,1 s)** hvert plan har vært kjørt ned. Posisjon ≈ akkumulert ned-tid − akkumulert opp-tid (klemt til [0, full slaglengde]).
 - **Nøytral stilling:** begge plan litt over horisontal/plan stilling — settes ved å kjøre opp til referanse og så ev. en liten, kjent ned-tid.
 - **Ved tvil/usikkerhet** (drift, oppstart, sensorfeil, krysning) → **kjør begge mer opp** (konservativ/sikker retning). Re-referér jevnlig ved å kjøre full opp-puls (lengre enn full slaglengde).
@@ -177,6 +177,15 @@ Planene har ingen posisjonssensor. Posisjon estimeres med ren tidsintegrasjon:
 - **Dødbånd** rundt 0° (f.eks. ±1–2°) så systemet ikke jager småbevegelser.
 - **Rate-/pådragsbegrensning** (~5 s lavpass, §6) hindrer hyppige korreksjoner.
 - **Interlock:** aldri U+D samtidig på samme side; maks samtidig én aktiv ned-kommando.
+
+### 8.4 Sving-release (turn-inhibering)
+
+I sving skal ikke autotrim motvirke krengningen — skroget skal få krenge fritt inn. Regulatoren fryses og begge plan retraheres til nøytral mens båten svinger.
+
+- **Detektering:** krever **BÅDE** reell yaw-rate over et absolutt gulv (arm 12 dps / slipp 7 dps) **OG** lateralakselerasjon `a_lat = |v·ω_yaw|` (arm 1,5 / slipp 1,0 m/s²), med 500 ms debounce.
+- **Kritisk (bug fikset 2026-07-18):** yaw-gulvet må være med. Uten det tilsvarer `a_lat`-terskelen en absurd lav yaw-rate ved planing (3–4 dps @30–36 kn), og normal bølge-/kursholdings-yaw låser inhiberinga permanent → slagside måles men korrigeres ikke. Se `analysis/sim_control.py`.
+- **Failsafe:** hard maks-tid (4 s) — inhiberinga kan aldri stå låst permanent.
+- **Ikke** `v·ω`-kompensasjon i rollmålingen (kalibreringsdata: r=0,15, forverret estimatet).
 
 ---
 
@@ -197,6 +206,7 @@ ESP32 eksponerer en GATT-tjeneste for **Android-app (BLE)**. Foreløpig paramete
 - **Watchdog** på ESP32 som faller til STANDBY ved feil i sensor/GPS/loop.
 - **GPS-tap eller urimelig IMU-data** → STANDBY.
 - **Interlock i fastvare** mot motstridende relékommandoer.
+- **Sving-inhibering kan aldri låse permanent:** hard maks-tid (4 s) + absolutt yaw-gulv sikrer at et hengende/biased yaw-signal ikke setter systemet ut av spill (jf. §8.4).
 - **Maks deployerings-/kjøretid** per kommando som hard grense, så et hengende relé ikke kjører et plan til endestopp i det uendelige.
 
 ---

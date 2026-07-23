@@ -47,11 +47,14 @@ Kun **RU** (brun ↔ orange) og **12 V** (svart ↔ grå) skifter farge mellom s
 - Ingen anti-windup: position-deadbåndet absorberer støy på deadband-grensen
 - Sekvensering: motparten trekkes alltid opp til < 10 % av slaglengde før den aktive siden kjøres ned
 
-**Sving-release (verifisert-kompilert, ikke sjøtestet):**
-- Lateralakselerasjon `a_lat = |v · ω_yaw|` (fart fra GPS × yaw-rate fra gyro-X) — fartsadaptiv terskel som dekker hele fartsområdet uavhengig av om svingen er trang/rolig eller vid/rask
-- Over `TURN_ON_LATACC` (1,5 m/s²): fryser utretting og retraherer begge plan til nøytral, så skroget får krenge fritt inn i svingen
-- Under `TURN_OFF_LATACC` (1,0 m/s², hysterese) i `TURN_DEBOUNCE_MS` (800 ms) sammenhengende: går tilbake til normal roll-regulering
+**Sving-release (revidert etter sjøtest 2026-07-18):**
+- Detektering krever **BÅDE** reell yaw-rate over et absolutt gulv **OG** lateralakselerasjon `a_lat = |v · ω_yaw|` (fart fra GPS × yaw-rate fra gyro-X)
+- Arm: `yaw > TURN_ON_YAW_DPS` (12 dps) **og** `a_lat > TURN_ON_LATACC` (1,5 m/s²) → fryser utretting og retraherer begge plan til nøytral, så skroget får krenge fritt inn i svingen
+- Slipp: `yaw < TURN_OFF_YAW_DPS` (7 dps) **eller** `a_lat < TURN_OFF_LATACC` (1,0 m/s²), holdt i `TURN_DEBOUNCE_MS` (500 ms) → tilbake til normal roll-regulering
+- **Failsafe:** hard maks-tid `TURN_MAX_MS` (4000 ms) — inhiberinga kan aldri stå låst permanent (mot hengende yaw-signal/bias)
+- **Hvorfor yaw-gulvet (bug fikset):** uten det blir `a_lat`-terskelen ved planing en absurd lav yaw-rate (3–4 dps @30–36 kn). Normal bølge-/kursholdings-yaw (±4 dps) låste da inhiberinga permanent → flappene retrahert og en vedvarende slagside ble *målt men aldri korrigert*. Reprodusert og verifisert i `analysis/sim_control.py` (dagens-vs-fiks).
 - Bevisst **ikke** brukt: `v·ω`-subtraksjon fra aY for å kompensere sideakselerasjon i selve rollmålingen — kalibreringsdata viste svak korrelasjon (r=0,15) og forverret roll-estimatet, siden båten koordinerer svingen selv
+- **Tuning gjenstår:** verifiser 12/7 dps-tersklene i ny 8-talls test over 17–36 kn
 
 **Parametere som faktisk brukes:**
 - `kP` (GUI viser ×100): proporsjonalforsterkning — typisk 10–20

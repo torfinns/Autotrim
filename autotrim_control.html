@@ -45,7 +45,9 @@
   .row{display:flex;align-items:center;gap:6px;margin:10px 0 2px}
   .row label{font-size:14px;white-space:nowrap}
   .dotfill{flex:1;height:0;border-bottom:1px dotted rgba(144,160,189,0.25);margin:0 4px;align-self:flex-end;margin-bottom:5px}
-  .row input[type=number]{width:90px;background:#0a1120;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px;font-size:15px;text-align:right}
+  .row input[type=number],.row input[type=text]{width:90px;background:#0a1120;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px;font-size:15px;text-align:right}
+  .row input.bad{border-color:#e5484d;background:#2a1416}
+  .signbtn{width:34px;height:34px;flex:none;margin-right:6px;background:var(--pill);color:var(--txt);border:1px solid var(--line);border-radius:8px;font-size:16px;line-height:1;cursor:pointer}
   .hint{color:var(--sub);font-size:11px;margin:0 0 6px}
   .relaybtns{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
   .btn-toggle{background:var(--pill);color:var(--sub);border:1px solid var(--line)}
@@ -121,25 +123,25 @@
     <legend>Parametere</legend>
     <p class="hint">Endringer sendes og lagres når du trykker «Send».</p>
 
-    <div class="row"><label>Fart på (kn)</label><span class="dotfill"></span><input type="number" id="speedOnKn" step="0.5"></div>
+    <div class="row"><label>Fart på (kn)</label><span class="dotfill"></span><input type="text" inputmode="decimal" id="speedOnKn"></div>
     <p class="hint">Auto kan engasjere når farten kommer over denne.</p>
-    <div class="row"><label>Fart av (kn)</label><span class="dotfill"></span><input type="number" id="speedOffKn" step="0.5"></div>
+    <div class="row"><label>Fart av (kn)</label><span class="dotfill"></span><input type="text" inputmode="decimal" id="speedOffKn"></div>
     <p class="hint">Auto kobler ut når farten faller under denne. Gapet gir hysterese.</p>
-    <div class="row"><label>Roll-settpunkt (°)</label><span class="dotfill"></span><input type="number" id="rollSetpointDeg" step="0.1"></div>
-    <p class="hint">Ønsket rollvinkel. 0 = vater. Positiv = aksepter litt styrbord slagside.</p>
-    <div class="row"><label>Monteringsoffset (°)</label><span class="dotfill"></span><input type="number" id="mountingOffsetDeg" step="0.1"></div>
-    <p class="hint">Kompenserer for skjev montering. Legg til målt feil: sensor viser −2° på vater → skriv +2.</p>
-    <div class="row"><label>Dødbånd (°)</label><span class="dotfill"></span><input type="number" id="rollDeadbandDeg" step="0.1"></div>
+    <div class="row"><label>Roll-settpunkt (°)</label><span class="dotfill"></span><button type="button" class="signbtn" data-for="rollSetpointDeg">±</button><input type="text" inputmode="decimal" id="rollSetpointDeg"></div>
+    <p class="hint">Ønsket rollvinkel. 0 = vater. Positiv = aksepter litt styrbord slagside. Bruk ± for minus.</p>
+    <div class="row"><label>Monteringsoffset (°)</label><span class="dotfill"></span><button type="button" class="signbtn" data-for="mountingOffsetDeg">±</button><input type="text" inputmode="decimal" id="mountingOffsetDeg"></div>
+    <p class="hint">Kompenserer for skjev montering. Legg til målt feil: sensor viser −2° på vater → skriv +2. Bruk ± for minus, komma eller punktum går begge.</p>
+    <div class="row"><label>Dødbånd (°)</label><span class="dotfill"></span><input type="text" inputmode="decimal" id="rollDeadbandDeg"></div>
     <p class="hint">Ingen korrigering så lenge rollen er innenfor ± dette rundt settpunktet. Hindrer jaging.</p>
-    <div class="row"><label>kP (×100)</label><span class="dotfill"></span><input type="number" id="kP" step="0.5" min="0"></div>
+    <div class="row"><label>kP (×100)</label><span class="dotfill"></span><input type="text" inputmode="decimal" id="kP"></div>
     <p class="hint">Proporsjonalledd: hvor kraftig den svarer på avvik. Typisk 5–20. Høyere = raskere, men kan overskyte.</p>
-    <div class="row"><label>Fusjon-alpha</label><span class="dotfill"></span><input type="number" id="fusionAlpha" step="0.005"></div>
+    <div class="row"><label>Fusjon-alpha</label><span class="dotfill"></span><input type="text" inputmode="decimal" id="fusionAlpha"></div>
     <p class="hint">Komplementærfilter (0,90–0,999): vekt på gyro vs. akselerometer.</p>
-    <div class="row"><label>Full slaglengde (ms)</label><span class="dotfill"></span><input type="number" id="fullStrokeMs" step="100"></div>
+    <div class="row"><label>Full slaglengde (ms)</label><span class="dotfill"></span><input type="text" inputmode="decimal" id="fullStrokeMs"></div>
     <p class="hint">Tid planet bruker fra helt opp til helt ned — brukes til posisjonsestimat.</p>
-    <div class="row"><label>Maks deploy (0–1)</label><span class="dotfill"></span><input type="number" id="maxDeployFrac" step="0.05"></div>
+    <div class="row"><label>Maks deploy (0–1)</label><span class="dotfill"></span><input type="text" inputmode="decimal" id="maxDeployFrac"></div>
     <p class="hint">Hvor langt ned et plan får kjøres. 0,8 = maks 80 %.</p>
-    <div class="row"><label>Nøytral deploy (0–1)</label><span class="dotfill"></span><input type="number" id="neutralFrac" step="0.05"></div>
+    <div class="row"><label>Nøytral deploy (0–1)</label><span class="dotfill"></span><input type="text" inputmode="decimal" id="neutralFrac"></div>
     <p class="hint">Hvileposisjon i STANDBY. 0 = helt opp.</p>
     <div class="row"><label>rollSign</label><span class="dotfill"></span>
       <select id="rollSign" style="background:#0a1120;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px;font-size:15px">
@@ -320,6 +322,16 @@ async function loadParams(){
   $("rollSign").value = dv.getInt8(48);
 }
 
+// Tolker tall robust: godtar komma ELLER punktum som desimaltegn, minus, og
+// mellomrom. Returnerer NaN på ugyldig (tomt, kun "-", bokstaver) så vi kan
+// varsle i stedet for å sende 0 i det stille.
+function parseNum(s){
+  s = String(s==null?"":s).trim().replace(/\s+/g,"").replace(",", ".");
+  if(s==="" || s==="-" || s==="." || s==="-.") return NaN;
+  const v = Number(s);
+  return isFinite(v) ? v : NaN;
+}
+
 function buildParams(){
   const buf = params ? params.slice(0) : new ArrayBuffer(56);
   const dv = new DataView(buf);
@@ -327,7 +339,13 @@ function buildParams(){
   dv.setUint8(3,  autoActive    ? 1:0);
   dv.setUint8(50, debugActive   ? 1:0);
   dv.setUint8(51, relayInverted ? 1:0);
-  PARAM_FIELDS.forEach(([id,off,sc])=> dv.setFloat32(off, (parseFloat($(id).value)||0)/(sc||1), true));
+  let bad=null;
+  PARAM_FIELDS.forEach(([id,off,sc])=>{
+    const v = parseNum($(id).value);
+    if(isNaN(v)){ $(id).classList.add("bad"); if(!bad) bad=id; }
+    else { $(id).classList.remove("bad"); dv.setFloat32(off, v/(sc||1), true); }
+  });
+  if(bad){ $(bad).focus(); throw new Error("Ugyldig tall i «"+bad+"» — sjekk feltet"); }
   dv.setInt8(48, parseInt($("rollSign").value));
   dv.setInt8(49, parseInt($("rollSign").value));
   return buf;
@@ -340,7 +358,7 @@ async function sendParams(){
     await chParams.writeValueWithResponse(buf);
     params = buf;
     toast("Sendt ✓","ok");
-  }catch(err){ toast("Skriving feilet: "+err,"err"); }
+  }catch(err){ toast(err.message || ("Skriving feilet: "+err),"err"); }
 }
 
 async function sendCmd(code){
@@ -355,17 +373,17 @@ const PRESETS = {
   default: {
     speedOnKn:4.0, speedOffKn:3.0, rollSetpointDeg:0.0, mountingOffsetDeg:0.0,
     rollDeadbandDeg:1.5, kP:10.0, fusionAlpha:0.98,
-    fullStrokeMs:6000, maxDeployFrac:0.8, neutralFrac:0.05
+    fullStrokeMs:5000, maxDeployFrac:0.8, neutralFrac:0.05
   },
   sporty: {
     speedOnKn:3.0, speedOffKn:2.5, rollSetpointDeg:0.0, mountingOffsetDeg:0.0,
     rollDeadbandDeg:0.8, kP:20.0, fusionAlpha:0.96,
-    fullStrokeMs:6000, maxDeployFrac:0.9, neutralFrac:0.05
+    fullStrokeMs:5000, maxDeployFrac:0.9, neutralFrac:0.05
   },
   smooth: {
     speedOnKn:4.0, speedOffKn:3.0, rollSetpointDeg:0.0, mountingOffsetDeg:0.0,
     rollDeadbandDeg:2.5, kP:5.0, fusionAlpha:0.995,
-    fullStrokeMs:6000, maxDeployFrac:0.7, neutralFrac:0.1
+    fullStrokeMs:5000, maxDeployFrac:0.7, neutralFrac:0.1
   }
 };
 
@@ -384,6 +402,13 @@ $("btnAuto").onclick = async ()=>{ autoActive=!autoActive; updateAutoBtn(); awai
 $("btnDebug").onclick = async ()=>{ debugActive=!debugActive; updateDebugBtn(); await sendParams(); };
 $("btnRelayInvert").onclick = async ()=>{ relayInverted=!relayInverted; updateRelayInvertBtn(); await sendParams(); };
 document.querySelectorAll("[data-cmd]").forEach(b=> b.onclick=()=>sendCmd(+b.dataset.cmd));
+
+// ± -knapp: veksle fortegn på feltet (så minus alltid er tilgjengelig, uansett tastatur).
+document.querySelectorAll(".signbtn").forEach(b=> b.onclick=()=>{
+  const el=$(b.dataset.for); let s=String(el.value||"").trim();
+  el.value = s.startsWith("-") ? s.slice(1) : ("-"+s);
+  el.classList.remove("bad");
+});
 
 if(!navigator.bluetooth){
   document.body.insertAdjacentHTML("afterbegin",

@@ -42,10 +42,26 @@ Implementert og verifisert-kompilert:
 
 ---
 
+## Sjøtest 2026-07-18 — funn og fiks
+**Reguleringsbrist (alvorlig): sving-inhibering låste seg → slagside målt men ikke korrigert.**
+- Årsak: `_inTurn` armes av et yaw-kast, men slippes bare når `latAcc < 1.0 m/s²`. Ved
+  planing tilsvarer det en absurd lav yaw-rate (3–4 dps @30–36 kn). Normal bølge-/
+  kursholdings-yaw (±4 dps) holder debouncen i live → inhibering låst, flappene retrahert.
+- Verifisert i `analysis/sim_control.py`: dagens kode står 40–82 % «i sving» med bølge-yaw
+  og lar +6° slagside stå ukorrigert. Med fiks: <2 % «i sving», roll < 0,6°.
+- Fiks (implementert i firmware): absolutt yaw-gulv `TURN_ON_YAW_DPS=12` / `TURN_OFF_YAW_DPS=7`,
+  debounce 500 ms, og hard maks-tid `TURN_MAX_MS=4000` (kan aldri låse permanent).
+- PID ikke nødvendig: selve regulatoren fungerer (scenario uten yaw korrigerer fint).
+  Feilen lå i sving-gaten, ikke regulatortypen. `kI`-param er forresten ubrukt i koden.
+
+**Offset-input i dashboard:** minus (± -knapp) + komma/punktum aksepteres nå; ugyldig tall
+gir rød ramme + varsel i stedet for stille 0. `mountingOffsetDeg` = -2,5° reflekterer reell
+monterings-/kjøreattitude (forventet kalibreringskonstant, ikke en feil).
+
 ## Neste steg (i prioritert rekkefølge)
 1. **Døp om firmware** i VS Code: `firmware/autotrim_v1/` → f.eks. `firmware/Autotrim_Firmware/` + fil likt. Legg evt. `#define FW_VERSION "..."` + skriv ut i `setup()`. Versjoner spores i git, ikke i filnavn.
 2. **Commit + push fra VS Code / GitHub Desktop.** ⚠️ IKKE push sandkasse-commitene (`3328ed5`/`2e2f58d`) — de kan ha truncerte snapshots fra fil-sync-rot. Windows-fila er fasit.
-3. **Ny testtur:** verifiser sving-release i 8-tall over **17–36 kn**; juster `TURN_ON/OFF_LATACC`. Følg `rel:`/tilstand i USB-debug.
+3. **Ny testtur:** verifiser den fiksede sving-release i 8-tall over **17–36 kn**; finjuster yaw-gulvet `TURN_ON_YAW_DPS=12` / `TURN_OFF_YAW_DPS=7` (og evt. `TURN_MAX_MS`). Følg `rel:`/tilstand i USB-debug. Sjekk at slagside nå faktisk korrigeres i lett sjø.
 4. **BLE-robusthet:** hvis reboots vedvarer tross dempning → vurder nRF52-port (fase 2) eller WiFi-AP.
 5. **NVS-krasj-recovery** sletter fortsatt hele NVS (nullstiller params) — vurder å bevare params (sjelden nå som BLE er dempet).
 

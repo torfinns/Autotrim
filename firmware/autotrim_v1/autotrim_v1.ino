@@ -373,7 +373,14 @@ static const float KN2MS             = 0.514444f;
 static const float DEG2RAD           = 0.0174532925f;
 static const float TURN_ON_LATACC    = 1.5f;    // m/s² — start sving-release
 static const float TURN_OFF_LATACC   = 1.0f;    // m/s² — slutt (hysterese)
-static const float TURN_DEBOUNCE_MS  = 800.0f;  // hold "sving" til metrikk < av i denne tiden
+static const float TURN_DEBOUNCE_MS  = 500.0f;  // hold "sving" til metrikk < av i denne tiden
+// Absolutt yaw-rate-gulv (dps): MÅ oppfylles I TILLEGG til lateral-akselerasjonen.
+// Uten dette blir a_lat-terskelen ved planing en absurd lav yaw-rate (3–4 dps @30–36 kn),
+// slik at normal bølge-/kursholdings-yaw «låser» sving-inhibering permanent → flappene
+// retraheres og en vedvarende slagside blir MÅLT men aldri korrigert.
+static const float TURN_ON_YAW_DPS   = 12.0f;   // reell sving må overstige dette for å arme
+static const float TURN_OFF_YAW_DPS  = 7.0f;    // slipp når yaw faller under dette (hysterese)
+static const float TURN_MAX_MS       = 4000.0f; // hard maks-tid i sving — kan aldri låse permanent
 
 class Control {
 public:
@@ -443,11 +450,20 @@ public:
         bool keep = p.autoEnabled && imuSane && (gpsFix || bypass) && (_autoLatched || bypass);
         if (!keep) { requestBothUp(); setState(State::STANDBY); break; }
 
-        // --- Sving-release (A): fartsadaptiv. a_lat = |v·ω_yaw| (m/s²).
-        //     I sving: frys utretting og retraher til nøytral → skroget krenger fritt inn.
-        float latAcc = fabsf(sogKn * KN2MS) * fabsf(yawRateDps * DEG2RAD);
-        if (latAcc > TURN_ON_LATACC)                 { _inTurn = true;  _turnOffMs = TURN_DEBOUNCE_MS; }
-        else if (_inTurn && latAcc < TURN_OFF_LATACC) { _turnOffMs -= dt*1000.0f; if (_turnOffMs <= 0) _inTurn = false; }
+        // --- Sving-release (A): krev BÅDE reell yaw-rate (absolutt gulv) OG lateral-akse.
+        //     a_lat = |v·ω_yaw| (m/s²).  I sving: frys utretting og retraher til nøytral
+        //     → skroget krenger fritt inn. Yaw-gulvet hindrer at bølge-/kursholdings-yaw
+        //     ved planing feilaktig låser inhiberinga (se konstant-kommentar over).
+        float yawMag = fabsf(yawRateDps);
+        float latAcc = fabsf(sogKn * KN2MS) * yawMag * DEG2RAD;
+        if (yawMag > TURN_ON_YAW_DPS && latAcc > TURN_ON_LATACC) { _inTurn = true; _turnOffMs = TURN_DEBOUNCE_MS; }
+        else if (_inTurn && (yawMag < TURN_OFF_YAW_DPS || latAcc < TURN_OFF_LATACC)) {
+          _turnOffMs -= dt*1000.0f; if (_turnOffMs <= 0) _inTurn = false;
+        }
+        // Hard maks-tid: sving-inhibering kan ALDRI stå låst permanent (failsafe mot
+        // hengende yaw-signal/bias). Etter TURN_MAX_MS slippes den uansett.
+        if (_inTurn) { _inTurnMs += dt*1000.0f; if (_inTurnMs > TURN_MAX_MS) { _inTurn = false; _inTurnMs = 0; } }
+        else         { _inTurnMs = 0; }
         if (_inTurn) {
           _active = Side::NONE; _trimFrac = 0; _settleMs = 0;
           float neutMs = constrain(p.neutralFrac, 0.0f, 1.0f) * p.fullStrokeMs;
@@ -565,7 +581,7 @@ private:
   bool    _autoLatched = false; float _recalMs = 0;
   int     _testCh = -1; float _testMs = 0;
   float   _holdLUms = 0, _holdLDms = 0, _holdRUms = 0, _holdRDms = 0;
-  bool    _inTurn = false; float _turnOffMs = 0;   // sving-release (hysterese)
+  bool    _inTurn = false; float _turnOffMs = 0, _inTurnMs = 0;   // sving-release (hysterese + maks-tid)
 };
 
 // ============================================================================
